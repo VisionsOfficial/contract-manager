@@ -12,6 +12,9 @@ import session from 'express-session';
 import createMemoryStore from 'memorystore';
 import { config } from 'config/config';
 import path from 'path';
+import agentConsentRouter from './../../contract-consent-agent/contract-agent/src/agent.consent.router';
+import agentContractNegotiationRouter from 'contract-agent/src/agent.contract.negotation.router';
+import agentContractProfileRouter from 'contract-agent/src/agent.contract.profile.router';
 
 const router = express();
 const startServer = async (url: string) => {
@@ -121,6 +124,9 @@ const startServer = async (url: string) => {
     contractRoutes,
     bilateralContractRoutes,
     contractsRoutes,
+    agentConsentRouter,
+    agentContractNegotiationRouter,
+    agentContractProfileRouter,
   );
   router.use((req, res, next) => {
     const message = 'Route not found or incorrect method request!';
