@@ -1,17 +1,14 @@
-import { Agent, ContractAgent, Logger, MongoDBProvider } from 'contract-agent';
+import { Agent, ContractAgent, Logger, MongooseProvider } from 'contract-agent';
+import Contract from '../models/contract.model';
+import mongoose from 'mongoose';
+import { IContractDB } from '../interfaces/contract.interface';
 
 export class ContractAgentService {
   private static instance: ContractAgentService;
   private client: any;
-  private collection: any;
 
   private constructor() {}
 
-  /**
-   * Retrieves or creates an instance of ContractAgentService.
-   * @param refresh - Whether to force creation of a new instance.
-   * @returns Instance of ContractAgentService.
-   */
   static async retrieveService(
     refresh: boolean = false,
   ): Promise<ContractAgentService> {
@@ -48,7 +45,7 @@ export class ContractAgentService {
   private async initialize(): Promise<void> {
     Agent.setConfigPath('../../contract-agent.config.json', __filename);
 
-    const contractAgent = await ContractAgent.retrieveService();
+    const contractAgent = await ContractAgent.retrieveService(MongooseProvider);
     if (!contractAgent) {
       throw new Error('Failed to initialize ContractAgent.');
     }
@@ -57,25 +54,18 @@ export class ContractAgentService {
 
     const provider = contractAgent.getDataProvider(
       'contracts',
-    ) as MongoDBProvider;
+    ) as MongooseProvider;
 
-    this.client = provider.getClient();
-    if (!this.client) {
-      throw new Error('MongoDB client not initialized');
-    }
-
-    this.collection = provider.getCollection();
-
-    if (!this.collection) {
-      throw new Error('MongoDB collection not initialized');
-    }
+    Logger.info(`Contrat provider set on ${provider.dataSource}`);
   }
 
-  getClient(): any {
-    return this.client;
-  }
+  async getMongoosePromise(): Promise<void> {
+    const contractAgent = await ContractAgent.retrieveService(MongooseProvider);
 
-  getCollection(): any {
-    return this.collection;
+    const provider = contractAgent.getDataProvider(
+      'contracts',
+    ) as MongooseProvider;
+
+    return provider.getMongoosePromise();
   }
 }

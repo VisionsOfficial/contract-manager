@@ -15,14 +15,17 @@ import path from 'path';
 import agentConsentRouter from './../../contract-consent-agent/contract-agent/src/agent.consent.router';
 import agentContractNegotiationRouter from 'contract-agent/src/agent.contract.negotation.router';
 import agentContractProfileRouter from 'contract-agent/src/agent.contract.profile.router';
+import { ContractAgentService } from 'services/contract.agent.service';
 
 const router = express();
 const startServer = async (url: string) => {
-  //
-
-  //
   try {
-    await mongoose.connect(url, { retryWrites: true });
+    if (config.useContractAgent) {
+      const agent = await ContractAgentService.retrieveService();
+      await agent.getMongoosePromise();
+    } else {
+      await mongoose.connect(url, { retryWrites: true });
+    }
     logger.info('MongoDB connected');
   } catch (error) {
     logger.error('Error connecting to MongoDB:', error);
