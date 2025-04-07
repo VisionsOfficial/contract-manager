@@ -34,6 +34,7 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
       });
     });
     await Contract.deleteMany({});
+    ruleAccess1();
   });
 
   it('Retrieve the cookie after pinging the server', async () => {
@@ -67,7 +68,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         target: 'a-target-uid',
       },
     };
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policy/${contractId}`)
       .set('Cookie', cookie)
@@ -87,7 +87,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         target: 'a-target-uid-for-participant-role',
       },
     };
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policy/${contractId}`)
       .set('Cookie', cookie)
@@ -105,7 +104,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         target,
       },
     };
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policy/${contractId}`)
       .set('Cookie', cookie)
@@ -157,7 +155,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         },
       },
     ];
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policies/${contractId}`)
       .set('Cookie', cookie)
@@ -210,7 +207,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         },
       ],
     };
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policies/role/${contractId}`)
       .set('Cookie', cookie)
@@ -265,7 +261,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
         },
       ],
     };
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/contracts/policies/offering/${contractId}`)
       .set('Cookie', cookie)
@@ -294,7 +289,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
   });
 
   it('Should retrieve a valid policies for a given service offering', async () => {
-    ruleAccess1();
     const response = await supertest(app.router)
       .get(
         `/contracts/serviceoffering/${contractId}?participant=participant&serviceOffering=offering`,
@@ -342,7 +336,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
   });
 
   it('Should iterate over an array, injecting policies for a specified list of roles.', async () => {
-    ruleAccess1();
     const data = [
       {
         roles: ['role-1', 'role-2'],
@@ -411,7 +404,6 @@ describe('Policies injection test cases for contract (Dataspace use cases).', ()
   });
 
   it('Should remove a set of policies from a given offering and participant.', async () => {
-    ruleAccess1();
     const participantId = 'participant';
     const offeringId = 'offering';
     const response = await supertest(app.router)

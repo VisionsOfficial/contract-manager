@@ -37,7 +37,7 @@ export const ruleAccess1 = () => {
         "requestedFields": [
             "target"
         ]
-    });
+    }).persist();
 };
 export const ruleBilling1 = () => {
     nock(baseURL).get(`/rule-billing-1.json`).reply(200, {

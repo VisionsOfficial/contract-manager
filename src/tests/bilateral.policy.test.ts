@@ -34,6 +34,7 @@ describe('Policies Injection test cases for Bilateral Contract.', () => {
       });
     });
     await Bilateral.deleteMany({});
+    ruleAccess1();
   });
 
   it('Should ping the server', async () => {
@@ -81,15 +82,16 @@ describe('Policies Injection test cases for Bilateral Contract.', () => {
         },
       },
     ];
-    ruleAccess1();
     const response = await supertest(app.router)
       .put(`/bilaterals/policies/${contractId}`)
       .set('Cookie', cookie)
       .send(policiesArray);
     expect(response.status).to.equal(200);
     expect(response.body.contract).to.be.an('object');
+    console.log(JSON.stringify(response.body.contract, null, 2))
     const contract = response.body.contract;
     policiesArray.forEach((policy) => {
+      console.log(policy.values.target)
       const targetPermission = contract.policy.find(
         (p: any) =>
           p.permission &&
@@ -97,6 +99,7 @@ describe('Policies Injection test cases for Bilateral Contract.', () => {
             (permission: any) => permission.target === policy.values.target,
           ),
       );
+      console.log(targetPermission)
       expect(targetPermission).to.exist;
     });
   });
