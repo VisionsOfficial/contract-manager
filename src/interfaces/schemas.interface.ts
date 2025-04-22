@@ -805,30 +805,16 @@ export type ContractRolesAndObligation = {
 };
 
 /**
- * Lean version of ContractDataProcessingInfrastructureServiceDocument
- *
- * This has all Mongoose getters & functions removed. This type will be returned from `ContractDataProcessingDocument.toObject()`.
- * ```
- * const contractdataprocessingObject = contractdataprocessing.toObject();
- * ```
- */
-export type ContractDataProcessingInfrastructureService = {
-  participant: string;
-  serviceOffering: string;
-  _id: mongoose.Types.ObjectId;
-};
-
-/**
- * Lean version of ContractDataProcessingDocument
+ * Lean version of ContractServiceChainDocument
  *
  * This has all Mongoose getters & functions removed. This type will be returned from `ContractDocument.toObject()`.
  * ```
  * const contractObject = contract.toObject();
  * ```
  */
-export type ContractDataProcessing = {
+export type ContractServiceChain = {
   catalogId: string;
-  infrastructureServices: ContractDataProcessingInfrastructureService[];
+  services: any[];
   status?: 'active' | 'inactive';
   _id: mongoose.Types.ObjectId;
 };
@@ -902,7 +888,7 @@ export type Contract = {
   orchestrator?: string;
   serviceOfferings: ContractServiceOffering[];
   rolesAndObligations: ContractRolesAndObligation[];
-  dataProcessings: ContractDataProcessing[];
+  serviceChains: ContractServiceChain[];
   purpose: ContractPurpose[];
   members: ContractRevokedMember[];
   revokedMembers: ContractRevokedMember[];
@@ -1231,24 +1217,12 @@ export type ContractRolesAndObligationDocument =
 /**
  * Mongoose Subdocument type
  *
- * Type of `ContractDataProcessingDocument["infrastructureServices"]` element.
+ * Type of `ContractDocument["serviceChains"]` element.
  */
-export type ContractDataProcessingInfrastructureServiceDocument =
-  mongoose.Types.Subdocument<mongoose.Types.ObjectId> & {
-    participant: string;
-    serviceOffering: string;
-    _id: mongoose.Types.ObjectId;
-  };
-
-/**
- * Mongoose Subdocument type
- *
- * Type of `ContractDocument["dataProcessings"]` element.
- */
-export type ContractDataProcessingDocument =
+export type ContractServiceChainDocument =
   mongoose.Types.Subdocument<mongoose.Types.ObjectId> & {
     catalogId: string;
-    infrastructureServices: mongoose.Types.DocumentArray<ContractDataProcessingInfrastructureServiceDocument>;
+    services: mongoose.Types.Array<any>;
     status?: 'active' | 'inactive';
     _id: mongoose.Types.ObjectId;
   };
@@ -1318,7 +1292,7 @@ export type ContractDocument = mongoose.Document<
     orchestrator?: string;
     serviceOfferings: mongoose.Types.DocumentArray<ContractServiceOfferingDocument>;
     rolesAndObligations: mongoose.Types.DocumentArray<ContractRolesAndObligationDocument>;
-    dataProcessings: mongoose.Types.DocumentArray<ContractDataProcessingDocument>;
+    serviceChains: mongoose.Types.DocumentArray<ContractServiceChainDocument>;
     purpose: mongoose.Types.DocumentArray<ContractPurposeDocument>;
     members: mongoose.Types.DocumentArray<ContractRevokedMemberDocument>;
     revokedMembers: mongoose.Types.DocumentArray<ContractRevokedMemberDocument>;
