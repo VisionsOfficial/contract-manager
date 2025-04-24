@@ -48,7 +48,7 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
   it('should add connector service chains to the contract', async () => {
     const serviceChains = [
       {
-        catalogId: '1',
+        serviceChainId: '1',
         services: [
           { service: 'connector-uri-a', participant: 'participant-a' },
           { service: 'connector-uri-b', participant: 'participant-b' },
@@ -62,10 +62,10 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
     expect(response.status).to.equal(200);
     expect(response.body).to.be.an('array');
     expect(response.body[0]).to.be.an('object');
-    expect(response.body[0]).to.have.property('catalogId', '1');
+    expect(response.body[0]).to.have.property('serviceChainId', '1');
     expect(response.body[0]).to.have.property('services');
-    expect(response.body[0]).to.have.property('catalogId');
-    chainId = response.body[0].catalogId;
+    expect(response.body[0]).to.have.property('serviceChainId');
+    chainId = response.body[0].serviceChainId;
   });
 
   it('should get related serviceChains', async () => {
@@ -80,7 +80,7 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
       .put(`/contracts/${contractId}/servicechains/update/${chainId}`)
       .set('Cookie', cookie)
       .send({
-        catalogId: '1',
+        serviceChainId: '1',
         services: [
           { service: 'connector-uri-b', participant: 'participant-b' },
           { service: 'connector-uri-c', participant: 'participant-c' },

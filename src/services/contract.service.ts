@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import mongoose, { Schema, Types } from 'mongoose';
 
 import { IContract, IContractDB } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
@@ -691,11 +691,10 @@ export class ContractService {
       if (contract) {
         if (
           !contract.serviceChains.find(
-            (element) => element.catalogId === chain.catalogId &&
-                element.status === 'active'
+            (element) => element.serviceChainId === chain.serviceChainId
           )
         ) {
-          chain.status = 'active';
+          console.log(chain)
           contract.serviceChains.push(chain);
         } else {
           throw new Error('Active same data chain already exists');
@@ -720,12 +719,9 @@ export class ContractService {
       if (contract) {
         const existingProcessing = contract.serviceChains.find(
           (item) =>
-            item.catalogId.toString() === chainId &&
-            item.status === 'active',
+            item.serviceChainId!.toString() === chainId
         );
         if (existingProcessing) {
-          existingProcessing.status = 'inactive';
-          chain.status = 'active';
           contract.serviceChains.push(chain);
           await contract.save();
           return contract.serviceChains;
@@ -743,18 +739,25 @@ export class ContractService {
   public async removeServiceChain(
     contractId: string,
     chainId: string,
-  ): Promise<ContractServiceChain | undefined> {
+  ): Promise<ContractServiceChain[] | undefined> {
     try {
       const contract = await Contract.findById(contractId);
       if (contract) {
-        const chain = contract.serviceChains.find(
-          (item) =>
-            item.catalogId.toString() === chainId && item.status === 'active',
-        );
-        if (chain) {
-          chain.status = 'inactive';
+        const initialLength = contract.serviceChains.length;
+        contract.serviceChains = contract.serviceChains.filter(
+            (item) => {
+              if(item?.serviceChainId && item.serviceChainId.toString() !== chainId){
+                return item;
+              } else if (item?.catalogId && item.catalogId.toString() !== chainId){
+                return item
+              }
+            }
+        ) as Types.DocumentArray<ContractServiceChainDocument>;
+        if (contract.serviceChains.length !== initialLength) {
           await contract.save();
-          return chain;
+          return contract.serviceChains;
+        } else {
+          throw new Error('Processing not found in the contract');
         }
       } else {
         throw new Error('Contract not found');
@@ -774,7 +777,7 @@ export class ContractService {
         const initialLength = contract.serviceChains.length;
         contract.serviceChains = contract.serviceChains.filter(
           (item) =>
-            item.catalogId !== chain.catalogId &&
+              (item.serviceChainId!.toString() || item.catalogId!.toString()) !== chain.serviceChainId &&
             item.services !== chain.services,
         ) as Types.DocumentArray<ContractServiceChainDocument>;
         if (contract.serviceChains.length !== initialLength) {

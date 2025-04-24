@@ -813,10 +813,9 @@ export type ContractRolesAndObligation = {
  * ```
  */
 export type ContractServiceChain = {
-  catalogId: string;
+  catalogId?: string;
+  serviceChainId?: string;
   services: any[];
-  status?: 'active' | 'inactive';
-  _id: mongoose.Types.ObjectId;
 };
 
 /**
@@ -1219,13 +1218,11 @@ export type ContractRolesAndObligationDocument =
  *
  * Type of `ContractDocument["serviceChains"]` element.
  */
-export type ContractServiceChainDocument =
-  mongoose.Types.Subdocument<mongoose.Types.ObjectId> & {
-    catalogId: string;
-    services: mongoose.Types.Array<any>;
-    status?: 'active' | 'inactive';
-    _id: mongoose.Types.ObjectId;
-  };
+export type ContractServiceChainDocument = mongoose.Types.Subdocument<any> & {
+  catalogId?: string;
+  serviceChainId?: string;
+  services: mongoose.Types.Array<any>;
+};
 
 /**
  * Mongoose Subdocument type
