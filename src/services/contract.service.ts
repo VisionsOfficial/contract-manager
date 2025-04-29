@@ -694,7 +694,6 @@ export class ContractService {
             (element) => element.serviceChainId === chain.serviceChainId
           )
         ) {
-          console.log(chain)
           contract.serviceChains.push(chain);
         } else {
           throw new Error('Active same data chain already exists');
