@@ -830,6 +830,7 @@ export type ContractDataProcessing = {
   catalogId: string;
   infrastructureServices: ContractDataProcessingInfrastructureService[];
   status?: 'active' | 'inactive';
+  incentivePoints: number;
   _id: mongoose.Types.ObjectId;
 };
 
@@ -908,6 +909,7 @@ export type Contract = {
   revokedMembers: ContractRevokedMember[];
   status?: 'signed' | 'revoked' | 'pending';
   jsonLD?: string;
+  useDVCT?: boolean;
   _id: mongoose.Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
@@ -1250,6 +1252,7 @@ export type ContractDataProcessingDocument =
     catalogId: string;
     infrastructureServices: mongoose.Types.DocumentArray<ContractDataProcessingInfrastructureServiceDocument>;
     status?: 'active' | 'inactive';
+    incentivePoints: number;
     _id: mongoose.Types.ObjectId;
   };
 
@@ -1324,6 +1327,7 @@ export type ContractDocument = mongoose.Document<
     revokedMembers: mongoose.Types.DocumentArray<ContractRevokedMemberDocument>;
     status?: 'signed' | 'revoked' | 'pending';
     jsonLD?: string;
+    useDVCT?: boolean;
     _id: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;

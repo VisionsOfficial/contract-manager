@@ -101,6 +101,7 @@ const DataProcessingSchema = new Schema({
     enum: ['active', 'inactive'],
     default: 'active',
   },
+  incentivePoints: { type: Number},
 });
 
 const ContractSchema: Schema = new Schema(
@@ -122,6 +123,10 @@ const ContractSchema: Schema = new Schema(
     },
     jsonLD: {
       type: String,
+    },
+    useDVCT: {
+      type: Boolean,
+      default: false,
     },
   },
   {
