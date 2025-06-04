@@ -53,6 +53,7 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
           { service: 'connector-uri-a', participant: 'participant-a' },
           { service: 'connector-uri-b', participant: 'participant-b' },
         ],
+        incentivePoints: 10,
       },
     ];
     const response = await supertest(app.router)
@@ -86,7 +87,7 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
           { service: 'connector-uri-c', participant: 'participant-c' },
           { service: 'connector-uri-d', participant: 'participant-d' },
         ],
-        incentivePoints: 10,
+        incentivePoints: 15,
       });
     expect(response.status).to.equal(200);
   });
