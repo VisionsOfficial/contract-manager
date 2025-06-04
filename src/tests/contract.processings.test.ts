@@ -86,6 +86,7 @@ describe('Create an ecosystem contract, test service chains related endpoints.',
           { service: 'connector-uri-c', participant: 'participant-c' },
           { service: 'connector-uri-d', participant: 'participant-d' },
         ],
+        incentivePoints: 10,
       });
     expect(response.status).to.equal(200);
   });

@@ -80,6 +80,7 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
   it('should update a contract by ID', async () => {
     const updatedContractData = {
       updated: true,
+      useDVCT: true,
     };
     // Send a PUT request to update the contract by its ID
     const response = await supertest(app.router)
