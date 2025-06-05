@@ -362,8 +362,7 @@ export const getServiceChains = async (req: Request, res: Response) => {
   const contractService = await ContractService.getInstance();
   try {
     const contractId: string = req.params.id;
-    const serviceChains =
-      await contractService.getServiceChains(contractId);
+    const serviceChains = await contractService.getServiceChains(contractId);
     if (!serviceChains) {
       return res.json([]);
     }
@@ -381,6 +380,16 @@ export const writeServiceChains = async (req: Request, res: Response) => {
   try {
     const contractId: string = req.params.id;
     const processings = req.body;
+    if (processings[0].services) {
+      processings[0].services.forEach((service: any) => {
+        if (
+          service.incentivePoints === null ||
+          service.incentivePoints === undefined
+        ) {
+          service.incentivePoints = 0;
+        }
+      });
+    }
     const serviceChains = await contractService.writeServiceChains(
       contractId,
       processings,
@@ -423,6 +432,16 @@ export const updateServiceChain = async (req: Request, res: Response) => {
   try {
     const { id: contractId, chainId } = req.params;
     const processing = req.body;
+    if (processing.services) {
+      processing.services.forEach((service: any) => {
+        if (
+          service.incentivePoints === null ||
+          service.incentivePoints === undefined
+        ) {
+          service.incentivePoints = 0;
+        }
+      });
+    }
     const serviceChains = await contractService.updateServiceChain(
       contractId,
       chainId,
