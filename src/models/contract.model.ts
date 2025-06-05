@@ -93,7 +93,6 @@ const ServiceChainSchema = new Schema({
         enum: ['active', 'inactive'],
         default: 'active',
     },
-    incentivePoints: { type: Number},
 });
 
 // const InfrastructureServiceSchema: any = new Schema({
