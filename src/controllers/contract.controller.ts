@@ -380,16 +380,19 @@ export const writeServiceChains = async (req: Request, res: Response) => {
   try {
     const contractId: string = req.params.id;
     const processings = req.body;
-    if (processings[0].services) {
-      processings[0].services.forEach((service: any) => {
-        if (
-          service.incentivePoints === null ||
-          service.incentivePoints === undefined
-        ) {
-          service.incentivePoints = 0;
-        }
-      });
-    }
+    processings.forEach((processing: any) => {
+      if (processing.services) {
+        processing.services.forEach((service: any) => {
+          if (
+            service.incentivePoints === null ||
+            service.incentivePoints === undefined
+          ) {
+            service.incentivePoints = 0;
+          }
+        });
+      }
+    });
+
     const serviceChains = await contractService.writeServiceChains(
       contractId,
       processings,
