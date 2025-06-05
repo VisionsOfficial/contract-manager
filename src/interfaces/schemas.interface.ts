@@ -816,7 +816,6 @@ export type ContractServiceChain = {
   catalogId: string;
   services: any[];
   status?: 'active' | 'inactive';
-  incentivePoints: number;
   _id: mongoose.Types.ObjectId;
 };
 
@@ -1226,7 +1225,6 @@ export type ContractServiceChainDocument =
     catalogId: string;
     services: mongoose.Types.Array<any>;
     status?: 'active' | 'inactive';
-    incentivePoints: number;
     _id: mongoose.Types.ObjectId;
   };
 
@@ -1354,20 +1352,20 @@ type PopulatedProperty<Root, T extends keyof Root> = Omit<Root, T> & {
 export type PopulatedDocument<DocType, T> = T extends keyof DocType
   ? PopulatedProperty<DocType, T>
   : ParentProperty<T> extends keyof DocType
-  ? Omit<DocType, ParentProperty<T>> & {
-      [ref in ParentProperty<T>]: DocType[ParentProperty<T>] extends mongoose.Types.Array<
-        infer U
-      >
-        ? mongoose.Types.Array<
-            ChildProperty<T> extends keyof U
-              ? PopulatedProperty<U, ChildProperty<T>>
-              : PopulatedDocument<U, ChildProperty<T>>
-          >
-        : ChildProperty<T> extends keyof DocType[ParentProperty<T>]
-        ? PopulatedProperty<DocType[ParentProperty<T>], ChildProperty<T>>
-        : PopulatedDocument<DocType[ParentProperty<T>], ChildProperty<T>>;
-    }
-  : DocType;
+    ? Omit<DocType, ParentProperty<T>> & {
+        [ref in ParentProperty<T>]: DocType[ParentProperty<T>] extends mongoose.Types.Array<
+          infer U
+        >
+          ? mongoose.Types.Array<
+              ChildProperty<T> extends keyof U
+                ? PopulatedProperty<U, ChildProperty<T>>
+                : PopulatedDocument<U, ChildProperty<T>>
+            >
+          : ChildProperty<T> extends keyof DocType[ParentProperty<T>]
+            ? PopulatedProperty<DocType[ParentProperty<T>], ChildProperty<T>>
+            : PopulatedDocument<DocType[ParentProperty<T>], ChildProperty<T>>;
+      }
+    : DocType;
 
 /**
  * Helper types used by the populate overloads
@@ -1384,26 +1382,26 @@ declare module 'mongoose' {
       path: T,
       select?: string | any,
       model?: string | Model<any, THelpers>,
-      match?: any
+      match?: any,
     ): Query<
       ResultType extends Array<DocType>
         ? Array<PopulatedDocument<Unarray<ResultType>, T>>
         : ResultType extends DocType
-        ? PopulatedDocument<Unarray<ResultType>, T>
-        : ResultType,
+          ? PopulatedDocument<Unarray<ResultType>, T>
+          : ResultType,
       DocType,
       THelpers
     > &
       THelpers;
 
     populate<T extends string>(
-      options: Modify<PopulateOptions, { path: T }> | Array<PopulateOptions>
+      options: Modify<PopulateOptions, { path: T }> | Array<PopulateOptions>,
     ): Query<
       ResultType extends Array<DocType>
         ? Array<PopulatedDocument<Unarray<ResultType>, T>>
         : ResultType extends DocType
-        ? PopulatedDocument<Unarray<ResultType>, T>
-        : ResultType,
+          ? PopulatedDocument<Unarray<ResultType>, T>
+          : ResultType,
       DocType,
       THelpers
     > &
