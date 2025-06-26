@@ -232,6 +232,7 @@ export type BilateralContract = {
   limitationOfLiability?: Date;
   termsAndConditions?: string;
   jsonLD?: string;
+  useDVCT?: boolean;
   _id: mongoose.Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
@@ -505,6 +506,7 @@ export type BilateralContractDocument = mongoose.Document<
     limitationOfLiability?: Date;
     termsAndConditions?: string;
     jsonLD?: string;
+    useDVCT?: boolean;
     _id: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;

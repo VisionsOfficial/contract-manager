@@ -103,6 +103,10 @@ const BilateralContractSchema: Schema = new Schema(
     jsonLD: {
       type: String,
     },
+    useDVCT: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
