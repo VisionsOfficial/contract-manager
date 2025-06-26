@@ -57,6 +57,7 @@ describe('CRUD test cases for Bilateral Contracts.', () => {
           target: 'http://contract-target/service',
         },
       ],
+      useDVCT: true,
     };
     // Send a POST request to create the contract
     const response = await supertest(app.router)
@@ -71,6 +72,10 @@ describe('CRUD test cases for Bilateral Contracts.', () => {
     expect(response.body).to.have.property('_id');
     // Store the contract ID for later use (for update and delete tests)
     createdContractId = response.body._id;
+    // Check if DVCT usage exists
+    expect(response.body).to.have.property('useDVCT');
+    // Check if DVCT usage is set
+    expect(response.body.useDVCT).to.equal(true);
   });
 
   // Test case: Get a contract by ID
@@ -90,6 +95,7 @@ describe('CRUD test cases for Bilateral Contracts.', () => {
   it('should update a bilateral contract by ID', async () => {
     const updatedContractData = {
       updated: true,
+      useDVCT: false,
     };
     // Send a PUT request to update the contract by its ID
     const response = await supertest(app.router)
@@ -101,6 +107,10 @@ describe('CRUD test cases for Bilateral Contracts.', () => {
     expect(response.status).to.equal(200);
     // Check if the response has the expected 'message'
     expect(response.body).to.have.property('_id');
+    // Check if DVCT usage exists
+    expect(response.body).to.have.property('useDVCT');
+    // Check if DVCT usage is set
+    expect(response.body.useDVCT).to.equal(false);
   });
 
   // Test case: Sign a contract for party A twice and party B once

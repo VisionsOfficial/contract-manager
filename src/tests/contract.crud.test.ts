@@ -65,6 +65,10 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
     expect(response.body).to.have.property('_id');
     // Store the contract ID for later use (for update and delete tests)
     createdContractId = response.body._id;
+    // Check if DVCT usage exists
+    expect(response.body).to.have.property('useDVCT');
+    // Check if DVCT usage is set
+    expect(response.body.useDVCT).to.equal(true);
   });
 
   // Test case: Get a contract by ID
@@ -90,6 +94,10 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
       .send(updatedContractData);
     expect(response.status).to.equal(200);
     expect(response.body).to.have.property('_id');
+    // Check if DVCT usage exists
+    expect(response.body).to.have.property('useDVCT');
+    // Check if DVCT usage is set
+    expect(response.body.useDVCT).to.equal(false);
   });
 
   // Test case: Sign a contract for party A twice, party B once, the orchestrator, and set signed to true
