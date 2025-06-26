@@ -101,6 +101,7 @@ const ServiceChainSchema = new Schema({
 //     pre: { type: [mongoose.Schema.Types.Mixed], default: [] } as any, // Changed to Mixed
 // });
 
+
 export const ContractSchema: Schema = new Schema(
   {
     uid: String,
@@ -120,6 +121,10 @@ export const ContractSchema: Schema = new Schema(
     },
     jsonLD: {
       type: String,
+    },
+    useDVCT: {
+      type: Boolean,
+      default: false,
     },
   },
   {

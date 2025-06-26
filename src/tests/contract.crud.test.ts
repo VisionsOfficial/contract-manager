@@ -54,6 +54,7 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
           target: 'http://contract-target/service',
         },
       ],
+      useDVCT: true,
     };
     // Send a POST request to create the contract
     const response = await supertest(app.router)
@@ -80,6 +81,7 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
   it('should update a contract by ID', async () => {
     const updatedContractData = {
       updated: true,
+      useDVCT: false,
     };
     // Send a PUT request to update the contract by its ID
     const response = await supertest(app.router)
