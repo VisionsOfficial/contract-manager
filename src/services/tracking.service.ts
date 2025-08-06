@@ -14,7 +14,7 @@ export class TrackingService {
     contractId: string,
     participantId: string,
   ) {
-    if (process.env.USE_ACTION_TRACKING === 'true') {
+    if (process.env.USE_ACTION_TRACKING === 'true' && process.env.CATALOG_URL?.trim() !== '') {
       const route = `${process.env.CATALOG_URL}/tracking/contract-verification`;
       const response = await axios.post(
         `${process.env.CATALOG_URL}/tracking/contract-verification`,
