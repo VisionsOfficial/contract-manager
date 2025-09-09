@@ -86,14 +86,12 @@ const MemberSchema = new Schema(
 );
 
 const ServiceChainSchema = new Schema({
-    catalogId: { type: String, required: true },
+    catalogId: { type: String, required: false },
+    serviceChainId: { type: String, required: false },
     services: { type: [mongoose.Schema.Types.Mixed], default: [] }, // Changed to Mixed
-    status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'active',
     },
-});
+    { _id: false },
+);
 
 // const InfrastructureServiceSchema: any = new Schema({
 //     participant: { type: String, required: true },
