@@ -10,13 +10,12 @@ export class TrackingService {
     return TrackingService.instance;
   }
 
-  public static async contractVerification(
+  public async contractVerification(
     contractId: string,
     participantId: string,
   ) {
     if (process.env.USE_ACTION_TRACKING === 'true' && process.env.CATALOG_URL?.trim() !== '') {
-      const route = `${process.env.CATALOG_URL}/tracking/contract-verification`;
-      const response = await axios.post(
+      await axios.post(
         `${process.env.CATALOG_URL}/tracking/contract-verification`,
         { contractId, participantId },
       );

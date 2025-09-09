@@ -1,4 +1,4 @@
-import mongoose, { Types } from 'mongoose';
+import mongoose, { FlattenMaps, ObjectId, Types } from 'mongoose';
 
 import { IContract, IContractDB } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
@@ -15,6 +15,7 @@ import {
 import { IPolicyInjection } from 'interfaces/policy.interface';
 import { genPolicyFromRule } from './policy/utils';
 import pdp from 'services/policy/pdp.service';
+import { TrackingService } from './tracking.service';
 
 // Ecosystem Contract Service
 export class ContractService {
@@ -67,6 +68,39 @@ export class ContractService {
         .select('-jsonLD')
         .lean();
       return contract;
+    } catch (error) {
+      logger.error('[Contract/Service, getContract]:', error);
+      throw error;
+    }
+  }
+
+  // get contract
+  public async getValidatedContract(contractId: string, participant: string): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId)
+        .select('-jsonLD')
+        .lean();
+
+      const validated = await this.valdateContract(contract);
+
+      if(validated){
+        await TrackingService.getInstance().contractVerification(contractId, participant)
+        return contract;
+      } else {
+        return null
+      }
+
+    } catch (error) {
+      logger.error('[Contract/Service, getContract]:', error);
+      throw error;
+    }
+  }
+
+  // validate contract
+  public async valdateContract(contract: any): Promise<boolean> {
+    try {
+      //logics of contract validation
+      return true;
     } catch (error) {
       logger.error('[Contract/Service, getContract]:', error);
       throw error;

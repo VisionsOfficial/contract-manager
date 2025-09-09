@@ -45,6 +45,31 @@ export const getContract = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Validate a requested contract
+ * @param req
+ * @param res
+ */
+export const getValidatedContract = async (req: Request, res: Response) => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const participant = req.headers['participant'];
+    if(!participant) return res.status(404).json({ error: 'Missing participant header.' });
+    const contract = await contractService.getValidatedContract(contractId, participant.toString());
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found or not validated.' });
+    }
+    logger.info('[Contract/Controller: getValidatedContract] Successfully called.');
+    return res.json(contract);
+  } catch (error) {
+    logger.error('Error validating the contract:', error);
+    res
+      .status(500)
+      .json({ error: 'An error occurred while validating the contract.' });
+  }
+};
+
 export const getPolicyForServiceOffering = async (
   req: Request,
   res: Response,
