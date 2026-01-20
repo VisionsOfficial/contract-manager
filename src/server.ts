@@ -13,7 +13,7 @@ import createMemoryStore from 'memorystore';
 import { config } from 'config/config';
 import path from 'path';
 import { ContractAgentService } from 'services/contract.agent.service';
-import { NegotiationAgentRouter } from 'contract-agent';
+import { NegotiationAgentRouter } from 'contract-agent/contract-agent/dist';
 
 const router = express();
 const startServer = async (url: string) => {
