@@ -21,10 +21,6 @@ import {
   removeServiceChain,
   updateServiceChain,
   deleteServiceChain,
-  injectCustomPolicy,
-  injectCustomPolicies,
-  injectCustomPoliciesForRole,
-  injectCustomPoliciesForRoles,
   injectOfferingCustomPolicies,
   removeOfferingCustomPolicies,
   getCustomPolicyForServiceOffering,
@@ -67,19 +63,18 @@ router.delete(
   removeOfferingPolicies,
 );
 
-// Custom Policies - Roles and Obligations
-router.put('/contracts/custompolicy/:id', injectCustomPolicy);
-router.put('/contracts/custompolicies/:id', injectCustomPolicies);
-router.put('/contracts/custompolicies/role/:id', injectCustomPoliciesForRole);
-router.put('/contracts/custompolicies/roles/:id', injectCustomPoliciesForRoles);
-
 // Custom Policies - Service Offerings
 router.get(
   '/contracts/custompolicies/offering/:contractId/:participantId/:serviceOfferingId',
   getCustomPolicyForServiceOffering,
 );
 router.put(
-  '/contracts/custompolicies/offering/:id',
+  '/contracts/custompolicies/offering/:contractId/:offeringId/:participantId',
+  [
+    check('contractId').isString(),
+    check('offeringId').isString(),
+    check('participantId').isString(),
+  ],
   logPayloadMiddleware,
   injectOfferingCustomPolicies,
 );

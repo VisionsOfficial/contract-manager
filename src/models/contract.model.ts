@@ -108,7 +108,7 @@ export const ContractSchema: Schema = new Schema(
     ecosystem: String,
     orchestrator: String,
     serviceOfferings: [OfferingSchema],
-    rolesAndObligations: [{ role: String, policies: [PolicySchema], customPolicies: [{ type: String }] }],
+    rolesAndObligations: [{ role: String, policies: [PolicySchema] }],
     serviceChains: { type: [ServiceChainSchema], default: [] },
     purpose: [PurposeSchema],
     members: [MemberSchema],
