@@ -100,6 +100,33 @@ export class ContractService {
     }
   }
 
+  // get custom policies for a given participant and service offering
+  public async getCustomPolicyForServiceOffering(
+    contractId: string,
+    participantId: string,
+    serviceOfferingId: string,
+  ): Promise<string[] | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        return null;
+      }
+      const serviceOffering = contract.serviceOfferings.find((offering) => {
+        return (
+          offering.participant === participantId &&
+          offering.serviceOffering === serviceOfferingId
+        );
+      });
+      if (!serviceOffering) {
+        return null;
+      }
+      const customPolicies = (serviceOffering as any).customPolicies || [];
+      return customPolicies;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // update contract
   public async updateContract(
     contractId: string,
@@ -559,6 +586,188 @@ export class ContractService {
     }
   }
 
+  public async addCustomPoliciesForRoles(
+    contractId: string,
+    data: { roles: string[]; customPolicies: string[] }[],
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+
+      for (const entry of data) {
+        const { roles, customPolicies } = entry;
+        if (!roles || !Array.isArray(roles) || roles.length === 0) {
+          throw new Error('Roles are not defined or empty');
+        }
+        if (!customPolicies || !Array.isArray(customPolicies)) {
+          throw new Error('Custom policies are not defined or not an array');
+        }
+
+        for (const role of roles) {
+          let roleIndex = contract.rolesAndObligations.findIndex(
+            (roleEntry) => roleEntry.role === role,
+          );
+          if (roleIndex === -1) {
+            contract.rolesAndObligations.push({
+              role,
+              policies: [],
+              customPolicies: [],
+            });
+            roleIndex = contract.rolesAndObligations.length - 1;
+          }
+
+          const roleEntry = contract.rolesAndObligations[roleIndex];
+          if (!roleEntry.customPolicies) {
+            roleEntry.customPolicies = [];
+          }
+          roleEntry.customPolicies.push(...customPolicies);
+        }
+      }
+
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error: any) {
+      logger.error('[Contract/Service, addCustomPoliciesForRoles]:', error);
+      throw error;
+    }
+  }
+
+  public async addCustomPoliciesForRole(
+    contractId: string,
+    data: { role: string; customPolicies: string[] },
+  ): Promise<IContractDB | null> {
+    try {
+      const role = data.role;
+      if (!role) {
+        throw new Error('Role is not defined');
+      }
+      if (!data.customPolicies || !Array.isArray(data.customPolicies)) {
+        throw new Error('Custom policies are not defined or not an array');
+      }
+
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+
+      let roleIndex = contract.rolesAndObligations.findIndex(
+        (roleEntry) => roleEntry.role === role,
+      );
+      if (roleIndex === -1) {
+        contract.rolesAndObligations.push({
+          role,
+          policies: [],
+          customPolicies: [],
+        });
+        roleIndex = contract.rolesAndObligations.length - 1;
+      }
+
+      const roleEntry = contract.rolesAndObligations[roleIndex];
+      if (!roleEntry.customPolicies) {
+        roleEntry.customPolicies = [];
+      }
+      roleEntry.customPolicies.push(...data.customPolicies);
+
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error: any) {
+      logger.error('[Contract/Service, addCustomPoliciesForRole]:', error);
+      throw error;
+    }
+  }
+
+  public async addCustomPolicies(
+    contractId: string,
+    data: { role: string; customPolicies: string[] }[],
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+
+      for (const item of data) {
+        const role = item.role;
+        if (!role) {
+          throw new Error('Role is not defined');
+        }
+        if (!item.customPolicies || !Array.isArray(item.customPolicies)) {
+          throw new Error('Custom policies are not defined or not an array');
+        }
+
+        let roleIndex = contract.rolesAndObligations.findIndex(
+          (entry) => entry.role === role,
+        );
+        if (roleIndex === -1) {
+          contract.rolesAndObligations.push({
+            role,
+            policies: [],
+            customPolicies: [],
+          });
+          roleIndex = contract.rolesAndObligations.length - 1;
+        }
+
+        const roleEntry = contract.rolesAndObligations[roleIndex];
+        if (!roleEntry.customPolicies) {
+          roleEntry.customPolicies = [];
+        }
+        roleEntry.customPolicies.push(...item.customPolicies);
+      }
+
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error: any) {
+      logger.error('[Contract/Service, addCustomPolicies]:', error);
+      throw error;
+    }
+  }
+
+  public async addCustomPolicy(
+    contractId: string,
+    data: { role: string; customPolicy: string },
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+
+      const role = data.role;
+      if (!role) {
+        throw new Error('Role is not defined');
+      }
+      if (!data.customPolicy) {
+        throw new Error('Custom policy is not defined');
+      }
+
+      let roleIndex = contract.rolesAndObligations.findIndex(
+        (entry) => entry.role === role,
+      );
+      if (roleIndex === -1) {
+        contract.rolesAndObligations.push({
+          role,
+          policies: [],
+          customPolicies: [],
+        });
+        roleIndex = contract.rolesAndObligations.length - 1;
+      }
+
+      const roleEntry = contract.rolesAndObligations[roleIndex];
+      if (!roleEntry.customPolicies) {
+        roleEntry.customPolicies = [];
+      }
+      roleEntry.customPolicies.push(data.customPolicy);
+
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error) {
+      logger.error('[Contract/Service, addCustomPolicy]:', error);
+      throw error;
+    }
+  }
+
   public async addOfferingPolicies(
     contractId: string,
     serviceOffering: string,
@@ -648,6 +857,81 @@ export class ContractService {
     }
   }
 
+  public async addOfferingCustomPolicies(
+    contractId: string,
+    serviceOffering: string,
+    participant: string,
+    customPolicies: string[],
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+
+      let offering = contract.serviceOfferings.find(
+        (entry: ContractServiceOffering) =>
+          entry.serviceOffering === serviceOffering &&
+          entry.participant === participant,
+      );
+
+      if (!offering) {
+        contract.serviceOfferings.push({
+          participant: participant,
+          serviceOffering: serviceOffering,
+          policies: [],
+          customPolicies: [],
+        } as any);
+        offering =
+          contract.serviceOfferings[contract.serviceOfferings.length - 1];
+      }
+
+      if (!offering.customPolicies) {
+        offering.customPolicies = [];
+      }
+      offering.customPolicies.push(...customPolicies);
+
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error: any) {
+      logger.error('[Contract/Service, addOfferingCustomPolicies]:', error);
+      throw error;
+    }
+  }
+
+  public async removeOfferingCustomPolicies(
+    contractId: string,
+    offeringId: string,
+    participantId: string,
+  ): Promise<IContractDB | null> {
+    try {
+      const contract: ContractDocument | null =
+        await Contract.findById(contractId);
+      if (!contract) {
+        throw new Error('Contract not found');
+      }
+      let offeringIndex = contract.serviceOfferings.findIndex(
+        (entry: ContractServiceOffering) =>
+          (entry.serviceOffering.includes(offeringId) ||
+            entry.serviceOffering === offeringId) &&
+          (entry.participant.includes(participantId) ||
+            entry.participant === participantId),
+      );
+      if (offeringIndex !== -1) {
+        const offering: ContractServiceOffering =
+          contract.serviceOfferings[offeringIndex];
+        offering.customPolicies = [];
+      } else {
+        return contract;
+      }
+      const updatedContract = await contract.save();
+      return updatedContract;
+    } catch (error: any) {
+      logger.error('[Contract/Service, removeOfferingCustomPolicies]:', error);
+      throw error;
+    }
+  }
+
   // get data chains
   public async getServiceChains(
     contractId: string,
@@ -691,7 +975,7 @@ export class ContractService {
       if (contract) {
         if (
           !contract.serviceChains.find(
-            (element) => element.serviceChainId === chain.serviceChainId
+            (element) => element.serviceChainId === chain.serviceChainId,
           )
         ) {
           contract.serviceChains.push(chain);
@@ -717,8 +1001,7 @@ export class ContractService {
       const contract = await Contract.findById(contractId);
       if (contract) {
         const existingProcessing = contract.serviceChains.find(
-          (item) =>
-            item.serviceChainId!.toString() === chainId
+          (item) => item.serviceChainId!.toString() === chainId,
         );
         if (existingProcessing) {
           contract.serviceChains.push(chain);
@@ -743,15 +1026,16 @@ export class ContractService {
       const contract = await Contract.findById(contractId);
       if (contract) {
         const initialLength = contract.serviceChains.length;
-        contract.serviceChains = contract.serviceChains.filter(
-            (item) => {
-              if(item?.serviceChainId && item.serviceChainId.toString() !== chainId){
-                return item;
-              } else if (item?.catalogId && item.catalogId.toString() !== chainId){
-                return item
-              }
-            }
-        ) as Types.DocumentArray<ContractServiceChainDocument>;
+        contract.serviceChains = contract.serviceChains.filter((item) => {
+          if (
+            item?.serviceChainId &&
+            item.serviceChainId.toString() !== chainId
+          ) {
+            return item;
+          } else if (item?.catalogId && item.catalogId.toString() !== chainId) {
+            return item;
+          }
+        }) as Types.DocumentArray<ContractServiceChainDocument>;
         if (contract.serviceChains.length !== initialLength) {
           await contract.save();
           return contract.serviceChains;
@@ -776,8 +1060,8 @@ export class ContractService {
         const initialLength = contract.serviceChains.length;
         contract.serviceChains = contract.serviceChains.filter(
           (item) =>
-              (item.serviceChainId!.toString() || item.catalogId!.toString()) !== chain.serviceChainId &&
-            item.services !== chain.services,
+            (item.serviceChainId!.toString() || item.catalogId!.toString()) !==
+              chain.serviceChainId && item.services !== chain.services,
         ) as Types.DocumentArray<ContractServiceChainDocument>;
         if (contract.serviceChains.length !== initialLength) {
           await contract.save();

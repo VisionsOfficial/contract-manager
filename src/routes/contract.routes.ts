@@ -21,6 +21,13 @@ import {
   removeServiceChain,
   updateServiceChain,
   deleteServiceChain,
+  injectCustomPolicy,
+  injectCustomPolicies,
+  injectCustomPoliciesForRole,
+  injectCustomPoliciesForRoles,
+  injectOfferingCustomPolicies,
+  removeOfferingCustomPolicies,
+  getCustomPolicyForServiceOffering,
 } from '../controllers/contract.controller';
 import { check } from 'express-validator';
 import { logPayloadMiddleware } from 'middlewares/logPayload.middleware';
@@ -58,6 +65,32 @@ router.delete(
     check('participantId').isString(),
   ],
   removeOfferingPolicies,
+);
+
+// Custom Policies - Roles and Obligations
+router.put('/contracts/custompolicy/:id', injectCustomPolicy);
+router.put('/contracts/custompolicies/:id', injectCustomPolicies);
+router.put('/contracts/custompolicies/role/:id', injectCustomPoliciesForRole);
+router.put('/contracts/custompolicies/roles/:id', injectCustomPoliciesForRoles);
+
+// Custom Policies - Service Offerings
+router.get(
+  '/contracts/custompolicies/offering/:contractId/:participantId/:serviceOfferingId',
+  getCustomPolicyForServiceOffering,
+);
+router.put(
+  '/contracts/custompolicies/offering/:id',
+  logPayloadMiddleware,
+  injectOfferingCustomPolicies,
+);
+router.delete(
+  '/contracts/custompolicies/offering/:contractId/:offeringId/:participantId',
+  [
+    check('contractId').isString(),
+    check('offeringId').isString(),
+    check('participantId').isString(),
+  ],
+  removeOfferingCustomPolicies,
 );
 
 // List the service chains within the chain available on the contrat

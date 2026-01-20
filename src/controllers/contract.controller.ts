@@ -358,6 +358,162 @@ export const removeOfferingPolicies = async (
   }
 };
 
+export const injectCustomPoliciesForRoles = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const updatedContract = await contractService.addCustomPoliciesForRoles(
+      contractId,
+      req.body,
+    );
+    res.status(200).json({ contract: updatedContract });
+  } catch (error) {
+    logger.error('Error while injecting custom policies for roles:', error);
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const injectCustomPoliciesForRole = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const updatedContract = await contractService.addCustomPoliciesForRole(
+      contractId,
+      req.body,
+    );
+    res.status(200).json({ contract: updatedContract });
+  } catch (error) {
+    logger.error('Error while injecting custom policies for role:', error);
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const injectCustomPolicies = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const updatedContract = await contractService.addCustomPolicies(
+      contractId,
+      req.body,
+    );
+    res.status(200).json({ contract: updatedContract });
+  } catch (error) {
+    logger.error('Error while injecting custom policies:', error);
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const injectCustomPolicy = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const updatedContract = await contractService.addCustomPolicy(
+      contractId,
+      req.body,
+    );
+    res.status(200).json({ contract: updatedContract });
+  } catch (error) {
+    logger.error('Error while injecting custom policy:', error);
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const injectOfferingCustomPolicies = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const { serviceOffering, customPolicies, participant } = req.body;
+    if (contractId && serviceOffering && participant && customPolicies) {
+      const updatedContract = await contractService.addOfferingCustomPolicies(
+        contractId,
+        serviceOffering,
+        participant,
+        customPolicies,
+      );
+      res.status(200).json({ contract: updatedContract });
+    } else {
+      throw new Error('Invalid payload.');
+    }
+  } catch (error) {
+    logger.error(
+      '[Contract/Controller/injectOfferingCustomPolicies] Error while injecting offering custom policies:',
+      error,
+    );
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const removeOfferingCustomPolicies = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    validationResult(req).throw();
+    const { contractId, offeringId, participantId } = req.params;
+    if (contractId && offeringId) {
+      const contract = await contractService.removeOfferingCustomPolicies(
+        contractId,
+        offeringId,
+        participantId,
+      );
+      res.status(200).json({ contract });
+    } else {
+      throw new Error('Invalid payload.');
+    }
+  } catch (error) {
+    logger.error(
+      '[Contract/Controller/removeOfferingCustomPolicies] Error while removing offering custom policies:',
+      error,
+    );
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const getCustomPolicyForServiceOffering = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const { contractId, participantId, serviceOfferingId } = req.params;
+    const customPolicies = await contractService.getCustomPolicyForServiceOffering(
+      contractId,
+      participantId,
+      serviceOfferingId,
+    );
+    res.status(200).json({ customPolicies });
+  } catch (error) {
+    logger.error(
+      '[Contract/Controller/getCustomPolicyForServiceOffering] Error while fetching custom policies:',
+      error,
+    );
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
 export const getServiceChains = async (req: Request, res: Response) => {
   const contractService = await ContractService.getInstance();
   try {
