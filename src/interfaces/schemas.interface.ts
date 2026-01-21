@@ -654,6 +654,7 @@ export type ContractServiceOffering = {
   participant: string;
   serviceOffering: string;
   policies: ContractServiceOfferingPolicy[];
+  customPolicies?: string[];
   _id: mongoose.Types.ObjectId;
 };
 
@@ -1085,6 +1086,7 @@ export type ContractServiceOfferingDocument =
     participant: string;
     serviceOffering: string;
     policies: mongoose.Types.DocumentArray<ContractServiceOfferingPolicyDocument>;
+    customPolicies?: string[];
     _id: mongoose.Types.ObjectId;
   };
 

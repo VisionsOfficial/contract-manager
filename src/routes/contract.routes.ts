@@ -21,6 +21,9 @@ import {
   removeServiceChain,
   updateServiceChain,
   deleteServiceChain,
+  injectOfferingCustomPolicies,
+  removeOfferingCustomPolicies,
+  getCustomPolicyForServiceOffering,
 } from '../controllers/contract.controller';
 import { check } from 'express-validator';
 import { logPayloadMiddleware } from 'middlewares/logPayload.middleware';
@@ -58,6 +61,31 @@ router.delete(
     check('participantId').isString(),
   ],
   removeOfferingPolicies,
+);
+
+// Custom Policies - Service Offerings
+router.get(
+  '/contracts/custompolicies/offering/:contractId/:participantId/:serviceOfferingId',
+  getCustomPolicyForServiceOffering,
+);
+router.put(
+  '/contracts/custompolicies/offering/:contractId/:offeringId/:participantId',
+  [
+    check('contractId').isString(),
+    check('offeringId').isString(),
+    check('participantId').isString(),
+  ],
+  logPayloadMiddleware,
+  injectOfferingCustomPolicies,
+);
+router.delete(
+  '/contracts/custompolicies/offering/:contractId/:offeringId/:participantId',
+  [
+    check('contractId').isString(),
+    check('offeringId').isString(),
+    check('participantId').isString(),
+  ],
+  removeOfferingCustomPolicies,
 );
 
 // List the service chains within the chain available on the contrat

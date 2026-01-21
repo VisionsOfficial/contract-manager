@@ -71,6 +71,7 @@ const OfferingSchema = new Schema({
   participant: { type: String, required: true },
   serviceOffering: { type: String, required: true },
   policies: [PolicySchema],
+  customPolicies: [ { type: String}],
 });
 const MemberSchema = new Schema(
   {
