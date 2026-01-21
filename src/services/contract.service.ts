@@ -682,6 +682,10 @@ export class ContractService {
     customPolicies: string[],
   ): Promise<IContractDB | null> {
     try {
+      if (!Array.isArray(customPolicies)) {
+        throw new Error('customPolicies must be an array');
+      }
+
       const contract = await Contract.findById(contractId);
       if (!contract) {
         throw new Error('Contract not found');
@@ -707,7 +711,11 @@ export class ContractService {
       if (!offering.customPolicies) {
         offering.customPolicies = [];
       }
-      offering.customPolicies.push(...customPolicies);
+      
+      // Only push if there are policies to add
+      if (customPolicies.length > 0) {
+        offering.customPolicies.push(...customPolicies);
+      }
 
       const updatedContract = await contract.save();
       return updatedContract;

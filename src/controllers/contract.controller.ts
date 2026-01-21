@@ -367,17 +367,23 @@ export const injectOfferingCustomPolicies = async (
     validationResult(req).throw();
     const { contractId, offeringId, participantId } = req.params;
     const { customPolicies } = req.body;
-    if (contractId && offeringId && participantId && customPolicies) {
-      const updatedContract = await contractService.addOfferingCustomPolicies(
-        contractId,
-        offeringId,
-        participantId,
-        customPolicies,
-      );
-      res.status(200).json({ contract: updatedContract });
-    } else {
-      throw new Error('Invalid payload.');
+    
+    if (!contractId || !offeringId || !participantId) {
+      throw new Error('Invalid payload. contractId, offeringId, and participantId are required.');
     }
+    
+    // Validate customPolicies format if provided
+    if (customPolicies !== undefined && !Array.isArray(customPolicies)) {
+      throw new Error('Invalid payload. customPolicies must be an array.');
+    }
+    
+    const updatedContract = await contractService.addOfferingCustomPolicies(
+      contractId,
+      offeringId,
+      participantId,
+      customPolicies || [],
+    );
+    res.status(200).json({ contract: updatedContract });
   } catch (error) {
     logger.error(
       '[Contract/Controller/injectOfferingCustomPolicies] Error while injecting offering custom policies:',
