@@ -18,6 +18,7 @@
     "mocha": "^10.2.0",
     "mongoose": "^7.8.3",
     "nock": "^14.0.1",
+    "pnpm": "^10.26.0",
     "sinon": "^16.1.3",
     "supertest": "^6.3.3",
     "swagger-jsdoc": "^6.2.8",
@@ -27,7 +28,7 @@
     "winston-mongodb": "^5.1.1"
   },
   "name": "contract",
-  "version": "2.6.0",
+  "version": "2.6.0-casa",
   "main": "src/start.ts",
   "scripts": {
     "gen-types": "npx mongoose-tsgen --config mtgen.config.json",
@@ -36,6 +37,7 @@
     "test": "mocha --require ts-node/register --exit \"./src/tests/!(*.agent).test.ts\"",
     "test-agent": "mocha --require ts-node/register --exit ./src/tests/*.agent.test.ts",
     "dev": "npx nodemon",
+    "tar": "tar -czf ca-contract.tar.gz ./",
     "gen-swagger": "ts-node src/swagger/swagger.ts",
     "gen-docs": "typedoc --out docs",
     "gen-report": "mocha --reporter mochawesome --require ts-node/register --exit ./src/tests/*.test.ts"
