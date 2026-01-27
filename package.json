@@ -37,7 +37,7 @@
     "test": "mocha --require ts-node/register --exit \"./src/tests/!(*.agent).test.ts\"",
     "test-agent": "mocha --require ts-node/register --exit ./src/tests/*.agent.test.ts",
     "dev": "npx nodemon",
-    "tar": "tar -czf ca-contract.tar.gz ./",
+    "tar": "tar --exclude=ca-contract.tar.gz -czf ca-contract.tar.gz ./",
     "gen-swagger": "ts-node src/swagger/swagger.ts",
     "gen-docs": "typedoc --out docs",
     "gen-report": "mocha --reporter mochawesome --require ts-node/register --exit ./src/tests/*.test.ts"
