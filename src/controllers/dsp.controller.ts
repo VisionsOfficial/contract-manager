@@ -122,3 +122,18 @@ export const getAllDspContractForParticipant = async (
     res.status(500).json({ error: error.message });
   }
 };
+
+export const checkConsumerPidExists = async (req: Request, res: Response) => {
+  try {
+    const { consumerPid } = req.params;
+    const contractService = await DSPService.getInstance();
+    const exists = await contractService.checkConsumerPidExists(consumerPid);
+    logger.info(
+      '[DSPContract/Controller: checkConsumerPidExists] Successfully called.',
+    );
+    res.status(200).json({ exists });
+  } catch (error: any) {
+    logger.error('Error while checking if consumerPid exists:', { error });
+    res.status(500).json({ error: error.message });
+  }
+};

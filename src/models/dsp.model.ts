@@ -26,6 +26,7 @@ export const DSPSchema: Schema = new Schema({
   agreement: { type: Schema.Types.Mixed, required: false },
   createdAt: { type: Date, required: true },
   updatedAt: { type: Date, required: true },
+  callbackAddress: { type: String, required: false },
 });
 
 export default mongoose.model<IDSPContractDB>('DSP', DSPSchema);

@@ -42,15 +42,21 @@ export class DSPService {
   }
 
   public async updateContract(
-    contractId: string,
+    consumerPid: string,
     updates: Partial<IDSPContract>,
   ): Promise<IDSPContractDB | null> {
     try {
       const updatedContract = await DSPModel.findOneAndUpdate(
-        { contractDefinitionId: contractId },
+        { consumerPid },
         updates,
         { new: true },
       ).lean();
+
+      if (!updatedContract) {
+        throw new Error(
+          `DSP Contract with consumerPid ${consumerPid} not found`,
+        );
+      }
 
       return updatedContract;
     } catch (error) {
@@ -59,13 +65,15 @@ export class DSPService {
     }
   }
 
-  public async deleteContract(contractId: string): Promise<void> {
+  public async deleteContract(consumerPid: string): Promise<void> {
     try {
       const deletedContract = await DSPModel.findOneAndDelete({
-        contractDefinitionId: contractId,
+        consumerPid,
       });
       if (!deletedContract) {
-        throw new Error(`CNP Contract with ID ${contractId} not found`);
+        throw new Error(
+          `DSP Contract with consumerPid ${consumerPid} not found`,
+        );
       }
     } catch (error) {
       logger.error('[DSPService, deleteContract]:', error);
@@ -88,14 +96,28 @@ export class DSPService {
   ): Promise<IDSPContractDB[]> {
     try {
       const contracts = await DSPModel.find({
-        consumerPid: { $regex: `^${participantId}-` },
-        providerPid: { $regex: `^${participantId}-` },
+        $or: [
+          { consumerPid: { $regex: `^${participantId}_` } },
+          { providerPid: { $regex: `^${participantId}_` } },
+        ],
       }).lean();
       return contracts;
     } catch (error: any) {
       logger.error('[DSPService, getAllDspContractForParticipant]:', error);
       throw new Error(
         `Error while retrieving participant ${participantId} contracts: ${error.message}`,
+      );
+    }
+  }
+
+  public async checkConsumerPidExists(consumerPid: string): Promise<boolean> {
+    try {
+      const contract = await DSPModel.exists({ consumerPid });
+      return !!contract;
+    } catch (error: any) {
+      logger.error('[DSPService, checkConsumerPidExists]:', error);
+      throw new Error(
+        `Error while checking if consumerPid exists: ${error.message}`,
       );
     }
   }
