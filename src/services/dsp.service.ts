@@ -41,6 +41,21 @@ export class DSPService {
     }
   }
 
+  public async getContractByAgreementId(
+    agreementId: string,
+  ): Promise<IDSPContractDB | null> {
+    try {
+      return await DSPModel.findOne({
+        agreement: {
+          '@id': agreementId,
+        },
+      }).lean();
+    } catch (error) {
+      logger.error('[DSPService, getContractByAgreementId]:', error);
+      throw error;
+    }
+  }
+
   public async updateContract(
     consumerPid: string,
     updates: Partial<IDSPContract>,
