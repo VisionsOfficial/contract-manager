@@ -6,13 +6,15 @@ import {
   deleteDSPContract,
   getAllDspContractForParticipant,
   checkConsumerPidExists,
+  getDSPContractByAgreementId,
 } from 'controllers/dsp.controller';
 import express, { Router } from 'express';
 
 const router: Router = express.Router();
 
-router.get('/dsp/:id', getDSPContract);
 router.get('/dsp/all/', getContracts);
+router.get('/dsp/:id', getDSPContract);
+router.get('/dsp/agreement/:id', getDSPContractByAgreementId);
 router.get('/dsp/all/:id', getAllDspContractForParticipant);
 router.get('/dsp/checkpid/:consumerPid', checkConsumerPidExists);
 router.post('/dsp/', createDSPContract);

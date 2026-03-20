@@ -51,6 +51,33 @@ export const getDSPContract = async (req: Request, res: Response) => {
   }
 };
 
+export const getDSPContractByAgreementId = async (
+  req: Request,
+  res: Response,
+) => {
+  const contractService = await DSPService.getInstance();
+  try {
+    const { id } = req.params;
+    const contract = await contractService.getContractByAgreementId(id);
+    if (!contract) {
+      return res.status(404).json({ error: 'DSP Contract not found' });
+    }
+    logger.info(
+      '[DSPContract/Controller: getDSPContractByAgreementId] Successfully called.',
+    );
+    return res.json(contract);
+  } catch (error: any) {
+    logger.error(
+      '[DSPContract/Controller: getDSPContractByAgreementId]:',
+      error,
+    );
+    res.status(500).json({
+      message: 'Failed to retrieve DSP contract by agreement ID',
+      error: error.message,
+    });
+  }
+};
+
 export const updateDSPContract = async (req: Request, res: Response) => {
   const contractService = await DSPService.getInstance();
   try {
