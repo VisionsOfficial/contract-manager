@@ -14,12 +14,9 @@ importers:
       axios:
         specifier: ^1.6.2
         version: 1.8.2
-      chai:
-        specifier: ^4.3.10
-        version: 4.5.0
       contract-agent:
-        specifier: github:Prometheus-X-association/contract-consent-agent#fix/npm-i
-        version: https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/209ec908c9eb2a8d4f6d227594a441cace90d584
+        specifier: github:Prometheus-X-association/contract-consent-agent
+        version: https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/9eb56937e2acc97f638e7418f951a9f293c23d88
       dotenv:
         specifier: ^16.3.1
         version: 16.4.7
@@ -53,12 +50,6 @@ importers:
       nock:
         specifier: ^14.0.1
         version: 14.0.1
-      sinon:
-        specifier: ^16.1.3
-        version: 16.1.3
-      supertest:
-        specifier: ^6.3.3
-        version: 6.3.4
       swagger-jsdoc:
         specifier: ^6.2.8
         version: 6.2.8(openapi-types@12.1.3)
@@ -102,6 +93,9 @@ importers:
       '@types/swagger-ui-express':
         specifier: ^4.1.6
         version: 4.1.7
+      chai:
+        specifier: ^4.3.10
+        version: 4.5.0
       mochawesome:
         specifier: ^7.1.3
         version: 7.1.3(mocha@10.8.2)
@@ -117,6 +111,12 @@ importers:
       rimraf:
         specifier: ^5.0.5
         version: 5.0.10
+      sinon:
+        specifier: ^16.1.3
+        version: 16.1.3
+      supertest:
+        specifier: ^6.3.3
+        version: 6.3.4
       swagger-autogen:
         specifier: ^2.23.7
         version: 2.23.7
@@ -569,8 +569,8 @@ packages:
     resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
     engines: {node: '>= 0.6'}
 
-  contract-agent@https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/209ec908c9eb2a8d4f6d227594a441cace90d584:
-    resolution: {tarball: https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/209ec908c9eb2a8d4f6d227594a441cace90d584}
+  contract-agent@https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/9eb56937e2acc97f638e7418f951a9f293c23d88:
+    resolution: {tarball: https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/9eb56937e2acc97f638e7418f951a9f293c23d88}
     version: 1.0.1
 
   cookie-signature@1.0.6:
@@ -2515,7 +2515,7 @@ snapshots:
 
   content-type@1.0.5: {}
 
-  contract-agent@https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/209ec908c9eb2a8d4f6d227594a441cace90d584: {}
+  contract-agent@https://codeload.github.com/Prometheus-X-association/contract-consent-agent/tar.gz/9eb56937e2acc97f638e7418f951a9f293c23d88: {}
 
   cookie-signature@1.0.6: {}
 
