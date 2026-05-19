@@ -1302,6 +1302,48 @@ export type ContractDocument = mongoose.Document<
     updatedAt?: Date;
   };
 
+export type DSPContractDocument = mongoose.Document<
+  mongoose.Types.ObjectId,
+  ContractQueries
+> &
+  ContractMethods & {
+    '@context': string[];
+    '@type': string;
+    contractDefinitionId: string;
+    consumerPid: string;
+    providerPid: string;
+    state:
+      | 'REQUESTED'
+      | 'OFFERED'
+      | 'ACCEPTED'
+      | 'AGREED'
+      | 'VERIFIED'
+      | 'FINALIZED'
+      | 'TERMINATED';
+    offer?: Record<string, unknown>;
+    createdAt?: Date;
+    updatedAt?: Date;
+  };
+
+export type IDSPContract = {
+  '@context': string[];
+  '@type': string;
+  consumerPid?: string;
+  providerPid?: string;
+  state:
+    | 'REQUESTED'
+    | 'OFFERED'
+    | 'ACCEPTED'
+    | 'AGREED'
+    | 'VERIFIED'
+    | 'FINALIZED'
+    | 'TERMINATED';
+  offer?: Record<string, unknown>;
+  agreement?: Record<string, unknown>;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
 /**
  * Check if a property on a document is populated:
  * ```
