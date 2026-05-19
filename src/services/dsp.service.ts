@@ -63,7 +63,10 @@ export class DSPService {
     try {
       const updatedContract = await DSPModel.findOneAndUpdate(
         { consumerPid },
-        updates,
+          {
+            ...updates,
+            updatedAt: new Date(),
+          },
         { new: true },
       ).lean();
 
