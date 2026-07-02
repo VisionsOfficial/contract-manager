@@ -188,8 +188,14 @@ export const getContractsFor = async (
   try {
     const did: string | undefined = req.params.did;
     const hasSigned: boolean = req.query.hasSigned !== 'false';
+    const participantRole = (
+      ['all', 'orchestrator', 'member'].includes(req.query.role as string)
+        ? req.query.role
+        : 'all'
+    ) as 'all' | 'orchestrator' | 'member';
     const contracts: IContractDB[] = await contractService.getContractsFor(
       did,
+      participantRole,
       hasSigned,
     );
     logger.info('[Contract/Controller: getContractsFor] Successfully called.');
