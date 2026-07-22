@@ -77,19 +77,207 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
     expect(response.body).to.have.property('_id');
   });
 
-  // Test case: Update a contract by ID
+  // Test case: Update a contract by ID (basic fields)
   it('should update a contract by ID', async () => {
     const updatedContractData = {
       updated: true,
       useDVCT: false,
     };
-    // Send a PUT request to update the contract by its ID
     const response = await supertest(app.router)
       .put(`${API_ROUTE_BASE}${createdContractId}`)
       .set('Cookie', authTokenCookie)
       .send(updatedContractData);
     expect(response.status).to.equal(200);
     expect(response.body).to.have.property('_id');
+  });
+
+  // Test case: Update contract with the new `project` field
+  it('should update a contract with project information', async () => {
+    const updatedData = {
+      project: {
+        title: 'Test Project',
+        caption: 'A test project caption',
+        description: 'Description of the test project',
+        categories: ['healthtech', 'dataspace'],
+        countryOrRegion: 'FR',
+        purpose: 'Research',
+        benefit: 'Improve data sharing',
+        legalBasisOfProcessing: 'Legitimate interest',
+        legalBasisDescription: 'Used for research purposes',
+        dataNeed: [{ resource: 'patient-data', description: 'Anonymised patient records' }],
+        serviceNeed: [{ service: 'analytics-api', description: 'Data analytics service' }],
+        contributions: [{ contribution: 'Data provision', description: 'Provide raw data' }],
+        participantsAndRoles: [{ participant: 'did:partyA', roles: ['dataProvider'] }],
+      },
+    };
+    const response = await supertest(app.router)
+      .put(`${API_ROUTE_BASE}${createdContractId}`)
+      .set('Cookie', authTokenCookie)
+      .send(updatedData);
+    expect(response.status).to.equal(200);
+    expect(response.body).to.have.property('project');
+    expect(response.body.project).to.have.property('title', 'Test Project');
+    expect(response.body.project.categories).to.include('healthtech');
+    expect(response.body.project.dataNeed).to.be.an('array').with.lengthOf(1);
+    expect(response.body.project.participantsAndRoles[0]).to.have.property('participant', 'did:partyA');
+  });
+
+  // Test case: Update contract with the new `additionalClauses` field
+  it('should update a contract with additionalClauses', async () => {
+    const updatedData = {
+      additionalClauses: {
+        reversibilityExit: { value: 'Return + deletion', deadlineDays: 30 },
+        subcontracting: { subcontractors: ['did:subcontractorA'] },
+        securityIncidentNotification: { value: '72h' },
+        intellectualPropertyOnOutputs: { value: 'Joint ownership' },
+        governingLawAndJurisdiction: { countryISO: 'FR', disputeMode: 'Arbitration' },
+        forceMajeure: { value: 'Standard + epidemic' },
+        auditRight: { value: 'Audit on notice', frequency: 'Annual' },
+        confidentiality: { value: 'Mutual NDA', survivalYears: 3 },
+        amendmentModification: { value: 'Written amendment only' },
+      },
+    };
+    const response = await supertest(app.router)
+      .put(`${API_ROUTE_BASE}${createdContractId}`)
+      .set('Cookie', authTokenCookie)
+      .send(updatedData);
+    expect(response.status).to.equal(200);
+    expect(response.body).to.have.property('additionalClauses');
+    const ac = response.body.additionalClauses;
+    expect(ac.reversibilityExit).to.have.property('value', 'Return + deletion');
+    expect(ac.securityIncidentNotification).to.have.property('value', '72h');
+    expect(ac.governingLawAndJurisdiction).to.have.property('countryISO', 'FR');
+    expect(ac.confidentiality).to.have.property('survivalYears', 3);
+    expect(ac.subcontracting.subcontractors).to.include('did:subcontractorA');
+  });
+
+  // Test case: Update contract with top-level `customFields`
+  it('should update a contract with top-level customFields', async () => {
+    const updatedData = {
+      customFields: {
+        sector: 'healthcare',
+        regulatoryFramework: 'HIPAA',
+        internalRef: 'CTR-2026-001',
+      },
+    };
+    const response = await supertest(app.router)
+      .put(`${API_ROUTE_BASE}${createdContractId}`)
+      .set('Cookie', authTokenCookie)
+      .send(updatedData);
+    expect(response.status).to.equal(200);
+    expect(response.body).to.have.property('customFields');
+    expect(response.body.customFields).to.have.property('sector', 'healthcare');
+    expect(response.body.customFields).to.have.property('internalRef', 'CTR-2026-001');
+  });
+
+  // Test case: Update contract serviceOffering with new SLA, commitments, contractDuration and termination fields
+  it('should update a contract serviceOffering with sla, commitments, contractDuration, termination and offering customFields', async () => {
+    const offering = {
+      participant: 'did:partyA',
+      serviceOffering: 'https://catalog.example/offering/123',
+      offerName: 'Premium Data Feed',
+      offerId: 'offer-123',
+      resources: [
+        {
+          resourceName: 'Patient Records',
+          resourceId: 'res-001',
+          resourceDescription: 'Anonymised patient data',
+          piiInformation: {
+            dataUserRole: 'dataProcessor',
+            processingPurposes: ['Research'],
+            legalBasis: 'Legitimate interest',
+            usageRestrictions: ['No reidentification'],
+            dpoContact: { name: 'Alice', email: 'alice@example.com', phone: '+33600000000' },
+            plannedProcessingActivities: ['Analysis'],
+            dataCategories: ['Health data'],
+            dataSubjectCategories: ['Patients'],
+            dataVolumeRange: '1000-10000',
+            subProcessorsInvolved: [],
+            transferOutsideEEA: { hasTransfer: false, countries: [], activities: [], safeguards: [] },
+            subsequentSubProcessingNoticePeriod: 30,
+            dataSubjectRightsAssistanceDelay: 5,
+            securityBreachAssistanceDelay: '72h',
+            auditNoticePeriod: 14,
+            subsequentControllerReuseAuthorization: { authorized: false, details: 'Not allowed' },
+            securityMeasures: { encryption: true, pseudonymisation: true },
+            securityCertificationStandard: ['ISO27001'],
+          },
+        },
+      ],
+      pricing: { value: 500, billingPeriod: 'monthly', setupFee: 100, description: 'Standard plan' },
+      sla: {
+        availability: '99.9%',
+        updateFrequency: 'Daily',
+        responseTime: { value: 200, unit: 'ms', measurementBasis: 'p95' },
+        availabilityTimeWindow: { value: '24/7', timezone: 'UTC' },
+        retentionPeriod: '1 year',
+        supportChannels: ['Email', 'Ticketing portal'],
+        supportServiceHours: 'Business hours 5x8',
+        supportSeverityLevel: { level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' },
+        measurementMonitoringMethod: 'Automated monitoring',
+        note: 'SLA reviewed annually',
+      },
+      commitments: [
+        {
+          commitmentConcerned: 'availability',
+          triggerOperator: '<',
+          triggerValue: '99%',
+          consequenceType: 'Service credit',
+          penaltyAmount: 10,
+          penaltyBasis: '% of period fee',
+          penaltyCap: '% of monthly fee',
+          measurementPeriod: 'Monthly',
+          claimProcedure: 'Automatic credit',
+          claimDeadlineDays: 30,
+          note: 'Applied automatically',
+        },
+      ],
+      contractDuration: { value: 12, unit: 'months', renewalMode: 'Automatic renewal', noticePeriodDays: 30 },
+      terminationForConvenience: { allowed: true, noticePeriodDays: 60 },
+      terminationForCause: {
+        breachThreshold: 3,
+        noticePeriod: 'X days notice',
+        noticePeriodDays: 15,
+        regulatoryOrSecurityTermination: 'Yes (immediate)',
+        regulatoryNoticeDays: 0,
+      },
+      penaltiesTerminationLink: {
+        cumulativePenaltyCapTermination: true,
+        suspensionBeforeTermination: true,
+        suspensionDurationDays: 7,
+      },
+      customFields: { dataFormat: 'JSON', transferProtocol: 'HTTPS' },
+    };
+
+    const response = await supertest(app.router)
+      .put(`${API_ROUTE_BASE}${createdContractId}`)
+      .set('Cookie', authTokenCookie)
+      .send({ serviceOfferings: [offering] });
+    expect(response.status).to.equal(200);
+    expect(response.body).to.have.property('serviceOfferings');
+    const so = response.body.serviceOfferings[0];
+    expect(so).to.have.property('offerName', 'Premium Data Feed');
+    // Resources & PII
+    expect(so.resources).to.be.an('array').with.lengthOf(1);
+    expect(so.resources[0].piiInformation).to.have.property('dataUserRole', 'dataProcessor');
+    expect(so.resources[0].piiInformation.securityCertificationStandard).to.include('ISO27001');
+    // SLA
+    expect(so.sla).to.have.property('availability', '99.9%');
+    expect(so.sla.responseTime).to.have.property('unit', 'ms');
+    expect(so.sla.supportChannels).to.include('Email');
+    // Commitments
+    expect(so.commitments).to.be.an('array').with.lengthOf(1);
+    expect(so.commitments[0]).to.have.property('consequenceType', 'Service credit');
+    expect(so.commitments[0]).to.have.property('claimProcedure', 'Automatic credit');
+    // Contract Duration
+    expect(so.contractDuration).to.have.property('value', 12);
+    expect(so.contractDuration).to.have.property('renewalMode', 'Automatic renewal');
+    // Termination
+    expect(so.terminationForConvenience).to.have.property('allowed', true);
+    expect(so.terminationForCause).to.have.property('breachThreshold', 3);
+    expect(so.penaltiesTerminationLink).to.have.property('suspensionBeforeTermination', true);
+    // Custom fields
+    expect(so.customFields).to.have.property('dataFormat', 'JSON');
   });
 
   // Test case: Sign a contract for party A twice, party B once, the orchestrator, and set signed to true
