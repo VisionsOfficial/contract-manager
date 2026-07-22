@@ -369,6 +369,10 @@ const OfferingSchema = new Schema({
     },
     { _id: false },
   ),
+
+  // Free-form custom fields for sector-specific data (legal, healthcare, finance, etc.)
+  // Sourced from the service offering's customFields and carried over at contract generation.
+  customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 });
 const MemberSchema = new Schema(
   {
@@ -615,6 +619,10 @@ export const ContractSchema: Schema = new Schema(
     useDVCT: { type: Boolean, default: false },
     project: { type: ProjectSchema, default: null },
     additionalClauses: { type: AdditionalClausesSchema, default: null },
+
+    // Free-form custom fields for sector-specific data (legal, healthcare, finance, etc.)
+    // Sourced from the ecosystem's customFields and carried over at contract generation.
+    customFields: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   {
     timestamps: true,
