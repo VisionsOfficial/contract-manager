@@ -41,6 +41,28 @@ export class DSPService {
     }
   }
 
+  public async getAgreements(
+    participantId: string,
+  ): Promise<Record<string, unknown>[]> {
+    try {
+      const contracts = await DSPModel.find({
+        $or: [
+          { 'agreement.assignee': participantId },
+          { 'agreement.assigner': participantId },
+        ],
+      })
+        .select('agreement')
+        .lean();
+
+      return contracts
+        .map((contract) => contract?.agreement as Record<string, unknown>)
+        .filter(Boolean);
+    } catch (error) {
+      logger.error('[DSPService, getAgreements]:', error);
+      throw error;
+    }
+  }
+
   public async getContractByAgreementId(
     agreementId: string,
   ): Promise<IDSPContractDB | null> {

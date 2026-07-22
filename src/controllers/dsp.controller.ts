@@ -51,6 +51,32 @@ export const getDSPContract = async (req: Request, res: Response) => {
   }
 };
 
+export const getAgreements = async (req: Request, res: Response) => {
+  const contractService = await DSPService.getInstance();
+  try {
+    const { participantId } = req.query;
+
+    if (!participantId || typeof participantId !== 'string') {
+      logger.error(
+        '[DSPContract/Controller: getAgreements] Invalid or missing participantId in query parameters',
+      );
+      return res
+        .status(400)
+        .json({ error: 'Invalid or missing participantId' });
+    }
+
+    const agreements = await contractService.getAgreements(participantId);
+    logger.info('[DSPContract/Controller: getAgreements] Successfully called.');
+    return res.json(agreements);
+  } catch (error: any) {
+    logger.error('[DSPContract/Controller: getAgreements]:', error);
+    res.status(500).json({
+      message: 'Failed to retrieve DSP agreements',
+      error: error.message,
+    });
+  }
+};
+
 export const getDSPContractByAgreementId = async (
   req: Request,
   res: Response,

@@ -1589,6 +1589,7 @@ export type DSPContractDocument = mongoose.Document<
       | 'FINALIZED'
       | 'TERMINATED';
     offer?: Record<string, unknown>;
+    agreement?: Record<string, unknown>;
     createdAt?: Date;
     updatedAt?: Date;
   };
