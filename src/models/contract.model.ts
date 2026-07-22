@@ -67,18 +67,88 @@ const PolicySchema = new Schema(
   },
   { _id: false },
 );
+
+// ─── Resource Schema (one offering can contain N resources) ──────────────────
+const ResourceSchema = new Schema(
+  {
+    resourceName: { type: String },
+    resourceId: { type: String },
+    resourceDescription: { type: String },
+
+    // ─── Conditional PII fields (usePII = true) ──────────────────────────
+    piiInformation: {
+      dataUserRole: {
+        type: String,
+        enum: ['dataController', 'dataProcessor', 'jointDataController'],
+      },
+      processingPurposes: [{ type: String }],
+      legalBasis: { type: String },
+      usageRestrictions: [{ type: String }],
+      dpoContact: new Schema(
+        {
+          name: { type: String },
+          email: { type: String },
+          phone: { type: String },
+        },
+        { _id: false },
+      ),
+      plannedProcessingActivities: [{ type: String }],
+      dataCategories: [{ type: String }],
+      dataSubjectCategories: [{ type: String }],
+      dataVolumeRange: {
+        type: String,
+        enum: ['1-100', '100-1000', '1000-10000', '10000-100000', '100000-1000000', '1000000+'],
+      },
+      subProcessorsInvolved: [{ type: mongoose.Schema.Types.Mixed }],
+      transferOutsideEEA: new Schema(
+        {
+          hasTransfer: { type: Boolean },
+          countries: [{ type: String }],
+          activities: [{ type: String }],
+          safeguards: [{ type: String }],
+        },
+        { _id: false },
+      ),
+      subsequentSubProcessingNoticePeriod: { type: Number },
+      dataSubjectRightsAssistanceDelay: { type: Number },
+      securityBreachAssistanceDelay: {
+        type: String,
+        enum: ['reasonableDelay', '72h'],
+      },
+      auditNoticePeriod: { type: Number },
+      subsequentControllerReuseAuthorization: new Schema(
+        {
+          authorized: { type: Boolean },
+          details: { type: String },
+        },
+        { _id: false },
+      ),
+      securityMeasures: { type: mongoose.Schema.Types.Mixed },
+      securityCertificationStandard: [
+        {
+          type: String,
+          enum: ['ISO27001', 'ISO27701', 'ISO9001', 'Europrivacy', 'SOC2', 'SECNUMCLOUD'],
+        },
+      ],
+      securityCertificationDate: { type: Date },
+      securityCertificationExpiryDate: { type: Date },
+    },
+  },
+  { _id: false },
+);
+
 const OfferingSchema = new Schema({
   participant: { type: String, required: true },
   serviceOffering: { type: String, required: true },
   policies: [PolicySchema],
 
-  // Offer & Resource
+  // Offer
   offerName: { type: String },
   offerId: { type: String },
   offerCaption: { type: String },
-  resourceName: { type: String },
-  resourceId: { type: String },
-  resourceDescription: { type: String },
+
+  // Resources (one offering can reference N resources, each with its own PII fields)
+  resources: { type: [ResourceSchema], default: [] },
 
   // Pricing
   pricing: new Schema(
