@@ -260,6 +260,7 @@ export class ContractService {
   // Get ecosystem contracts for a specific DID with optional filter
   public async getContractsFor(
     _did: string,
+    participantRole: 'all' | 'orchestrator' | 'member' = 'all',
     hasSigned?: boolean,
   ): Promise<IContractDB[]> {
     try {
@@ -271,13 +272,21 @@ export class ContractService {
         throw new Error(error.message);
       }
       const filter: Record<string, any> = {};
-      if (hasSigned) {
-        // Participant must appear in signatures
-        filter.members = { $elemMatch: { participant: did } };
-      } else if (hasSigned === false) {
-        // Participant must not appear in signatures
-        filter.members = { $not: { $elemMatch: { participant: did } } };
+
+      const memberCondition = hasSigned
+        ? { members: { $elemMatch: { participant: did } } }
+        : { members: { $not: { $elemMatch: { participant: did } } } };
+      const orchestratorCondition = { orchestrator: did };
+
+      if (participantRole === 'orchestrator') {
+        Object.assign(filter, orchestratorCondition);
+      } else if (participantRole === 'member') {
+        Object.assign(filter, memberCondition);
+      } else {
+        // 'all': orchestrator or member
+        filter.$or = [orchestratorCondition, memberCondition];
       }
+
       const contracts = await Contract.find(filter).select('-jsonLD');
       return contracts;
     } catch (error: any) {
@@ -691,7 +700,7 @@ export class ContractService {
       if (contract) {
         if (
           !contract.serviceChains.find(
-            (element) => element.serviceChainId === chain.serviceChainId
+            (element) => element.serviceChainId === chain.serviceChainId,
           )
         ) {
           contract.serviceChains.push(chain);
@@ -717,8 +726,7 @@ export class ContractService {
       const contract = await Contract.findById(contractId);
       if (contract) {
         const existingProcessing = contract.serviceChains.find(
-          (item) =>
-            item.serviceChainId!.toString() === chainId
+          (item) => item.serviceChainId!.toString() === chainId,
         );
         if (existingProcessing) {
           contract.serviceChains.push(chain);
@@ -743,15 +751,16 @@ export class ContractService {
       const contract = await Contract.findById(contractId);
       if (contract) {
         const initialLength = contract.serviceChains.length;
-        contract.serviceChains = contract.serviceChains.filter(
-            (item) => {
-              if(item?.serviceChainId && item.serviceChainId.toString() !== chainId){
-                return item;
-              } else if (item?.catalogId && item.catalogId.toString() !== chainId){
-                return item
-              }
-            }
-        ) as Types.DocumentArray<ContractServiceChainDocument>;
+        contract.serviceChains = contract.serviceChains.filter((item) => {
+          if (
+            item?.serviceChainId &&
+            item.serviceChainId.toString() !== chainId
+          ) {
+            return item;
+          } else if (item?.catalogId && item.catalogId.toString() !== chainId) {
+            return item;
+          }
+        }) as Types.DocumentArray<ContractServiceChainDocument>;
         if (contract.serviceChains.length !== initialLength) {
           await contract.save();
           return contract.serviceChains;
@@ -776,8 +785,8 @@ export class ContractService {
         const initialLength = contract.serviceChains.length;
         contract.serviceChains = contract.serviceChains.filter(
           (item) =>
-              (item.serviceChainId!.toString() || item.catalogId!.toString()) !== chain.serviceChainId &&
-            item.services !== chain.services,
+            (item.serviceChainId!.toString() || item.catalogId!.toString()) !==
+              chain.serviceChainId && item.services !== chain.services,
         ) as Types.DocumentArray<ContractServiceChainDocument>;
         if (contract.serviceChains.length !== initialLength) {
           await contract.save();
