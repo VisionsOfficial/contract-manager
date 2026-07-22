@@ -374,6 +374,7 @@ const OfferingSchema = new Schema({
   // Sourced from the service offering's customFields and carried over at contract generation.
   customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 });
+
 const MemberSchema = new Schema(
   {
     participant: { type: String, required: true },
