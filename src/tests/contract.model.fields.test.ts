@@ -440,10 +440,10 @@ describe('New fields of the Contract model', () => {
           updateFrequency: 'Daily',
           responseTime: { value: 200, unit: 'ms', measurementBasis: 'p95' },
           availabilityTimeWindow: { value: '24/7', timezone: 'Europe/Paris' },
-          retentionPeriod: '1 year',
-          generalAvailabilityDate: new Date('2025-06-01').toISOString(),
-          endOfSupportDate: new Date('2028-06-01').toISOString(),
-          endOfLifeDate: new Date('2030-01-01').toISOString(),
+          retentionPeriod: 365,
+          availabilityPeriod: '1 year',
+          endOfSupportDate: '30 days after contract ends',
+          endOfLifeDate: 'Contract duration',
           supportChannels: ['Email', 'Ticketing portal'],
           supportServiceHours: 'Business hours 5x8',
           supportSeverityLevel: { level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' },
@@ -462,7 +462,14 @@ describe('New fields of the Contract model', () => {
         expect(storedSla.availabilityTimeWindow.timezone).to.equal('Europe/Paris');
         expect(storedSla.supportChannels).to.deep.equal(['Email', 'Ticketing portal']);
         expect(storedSla.supportSeverityLevel.level).to.equal('High');
-        expect(storedSla.retentionPeriod).to.equal('1 year');
+        // Aligned on ServiceOffering.sla: numeric retention, the duration enum
+        // moved to `availabilityPeriod`, and the end-of-* dates are enums.
+        expect(storedSla.retentionPeriod).to.equal(365);
+        expect(storedSla.availabilityPeriod).to.equal('1 year');
+        expect(storedSla.endOfSupportDate).to.equal(
+          '30 days after contract ends',
+        );
+        expect(storedSla.endOfLifeDate).to.equal('Contract duration');
       });
     });
 

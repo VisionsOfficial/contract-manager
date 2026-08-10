@@ -20,7 +20,7 @@ import {
   insertServiceChain,
   removeServiceChain,
   updateServiceChain,
-  deleteServiceChain,
+  getValidatedContract,
 } from '../controllers/contract.controller';
 import { check } from 'express-validator';
 import { logPayloadMiddleware } from 'middlewares/logPayload.middleware';
@@ -33,6 +33,7 @@ router.post('/contracts/', createContract);
 router.get('/contracts/:id', getContract);
 router.get('/contracts/serviceoffering/:id', getPolicyForServiceOffering);
 router.put('/contracts/:id', updateContract);
+router.post('/contracts/:id/validate', getValidatedContract);
 router.put('/contracts/sign/:id', signContract);
 router.delete('/contracts/sign/revoke/:id/:did', revokeContractSignature);
 router.post(
