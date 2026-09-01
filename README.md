@@ -651,7 +651,7 @@ For more information see the [Tests definition](https://github.com/Prometheus-X-
           "endOfLifeDate": "2030-01-01T00:00:00.000Z",
           "supportChannels": ["Email", "Ticketing portal"],
           "supportServiceHours": "Business hours 5x8",
-g          "supportSeverityLevel": [
+          "supportSeverityLevel": [
             {
               "level": "High",
               "responseTimeValue": 4,
