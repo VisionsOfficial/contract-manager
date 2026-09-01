@@ -214,7 +214,7 @@ describe('CRUD test cases for Contracts (Dataspace use cases).', () => {
         availabilityPeriod: '1 year',
         supportChannels: ['Email', 'Ticketing portal'],
         supportServiceHours: 'Business hours 5x8',
-        supportSeverityLevel: { level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' },
+        supportSeverityLevel: [{ level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' }],
         measurementMonitoringMethod: 'Automated monitoring',
         note: 'SLA reviewed annually',
       },

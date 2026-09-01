@@ -446,7 +446,7 @@ describe('New fields of the Contract model', () => {
           endOfLifeDate: 'Contract duration',
           supportChannels: ['Email', 'Ticketing portal'],
           supportServiceHours: 'Business hours 5x8',
-          supportSeverityLevel: { level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' },
+          supportSeverityLevel: [{ level: 'High', responseTimeValue: 4, responseTimeUnit: 'hours' }],
           measurementMonitoringMethod: 'Automated dashboard',
           note: 'SLA reviewed annually',
         };
@@ -461,7 +461,7 @@ describe('New fields of the Contract model', () => {
         expect(storedSla.responseTime.measurementBasis).to.equal('p95');
         expect(storedSla.availabilityTimeWindow.timezone).to.equal('Europe/Paris');
         expect(storedSla.supportChannels).to.deep.equal(['Email', 'Ticketing portal']);
-        expect(storedSla.supportSeverityLevel.level).to.equal('High');
+        expect(storedSla.supportSeverityLevel[0].level).to.equal('High');
         // Aligned on ServiceOffering.sla: numeric retention, the duration enum
         // moved to `availabilityPeriod`, and the end-of-* dates are enums.
         expect(storedSla.retentionPeriod).to.equal(365);

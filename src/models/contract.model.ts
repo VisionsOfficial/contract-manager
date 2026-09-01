@@ -547,17 +547,19 @@ const OfferingSchema = new Schema({
                 type: String,
                 enum: ['24/7', 'Business hours 5x8', 'Extended 5x12'],
             },
-            supportSeverityLevel: new Schema(
-                {
-                    level: {
-                        type: String,
-                        enum: ['Critical', 'High', 'Medium', 'Low'],
+            supportSeverityLevel: [
+                new Schema(
+                    {
+                        level: {
+                            type: String,
+                            enum: ['Critical', 'High', 'Medium', 'Low'],
+                        },
+                        responseTimeValue: { type: Number },
+                        responseTimeUnit: { type: String },
                     },
-                    responseTimeValue: { type: Number },
-                    responseTimeUnit: { type: String },
-                },
-                { _id: false },
-            ),
+                    { _id: false },
+                ),
+            ],
             measurementMonitoringMethod: { type: String },
             note: { type: String },
         },
