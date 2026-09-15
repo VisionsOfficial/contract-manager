@@ -68,11 +68,11 @@ const PolicySchema = new Schema(
   { _id: false },
 );
 
-// ─── Representation / Proxy schemas ──────────────────────────────────────────
-// Mirrors the catalog's DataRepresentation model. The shape is dictated by what
-// the connector consumes in `proxyProcessing` (host/port/protocol/credential),
-// not by a URL. `credential` is an id the connector resolves against its own
-// local credential store, never a secret value.
+/**
+ * Mirrors the catalog's DataRepresentation proxy. The shape is dictated by what
+ * the connector consumes (host/port/protocol/credential), not by a URL, and
+ * `credential` is an id it resolves locally, never a secret value.
+ */
 const ProxySchema = new Schema(
   {
     protocol: { type: String },
@@ -103,18 +103,12 @@ const ResourceSchema = new Schema(
     resourceId: { type: String },
     resourceDescription: { type: String },
 
-    // Data resource specific. Casing matches the catalog source
-    // (DataResource.containsPII) and what the connector reads.
     containsPII: { type: Boolean, default: false },
-
-    // Software resource specific. Casing matches SoftwareResource.usePII.
     usePII: { type: Boolean, default: false },
 
-    // Resource access representations
     representation: { type: RepresentationSchema, default: null },
     apiResponseRepresentation: { type: RepresentationSchema, default: null },
 
-    // ─── Conditional PII fields ───────────────────────────────────────────
     piiInformation: {
       dataUserRole: {
         type: String,
@@ -190,12 +184,31 @@ const MemberSchema = new Schema(
   { _id: false },
 );
 
-const ServiceChainSchema = new Schema({
+/**
+ * One step of a service chain. Every key but `serviceOffering` is read as-is by
+ * deployed connectors and stays optional, a legacy step carrying only some of
+ * them. `serviceOffering` is filled server-side, never by the caller.
+ */
+const ServiceChainServiceSchema = new Schema(
+  {
+    participant: { type: String },
+    service: { type: String },
+    serviceOffering: { type: Schema.Types.ObjectId, default: null },
+    params: { type: String, default: '' },
+    configuration: { type: String, default: '' },
+    incentivePoints: { type: Number },
+    pre: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  },
+  { _id: false },
+);
+
+const ServiceChainSchema = new Schema(
+  {
     catalogId: { type: String, required: false },
     serviceChainId: { type: String, required: false },
-    services: { type: [mongoose.Schema.Types.Mixed], default: [] }, // Changed to Mixed
-    },
-    { _id: false },
+    services: { type: [ServiceChainServiceSchema], default: [] },
+  },
+  { _id: false },
 );
 
 // const InfrastructureServiceSchema: any = new Schema({
@@ -400,26 +413,6 @@ const AdditionalClausesSchema = new Schema(
   { _id: false },
 );
 
-// ─── Package Schema (pricing variants of an offering) ────────────────────────
-const PackageSchema = new Schema(
-  {
-    pricing: { type: Number },
-    currency: { type: String },
-    billingPeriod: { type: String },
-    costPerAPICall: { type: Number },
-    setupFee: { type: Number },
-    pricingDescription: { type: String },
-
-    // Raw catalog policies, kept as Mixed so no unknown key is dropped.
-    policy: { type: [mongoose.Schema.Types.Mixed], default: undefined },
-
-    // Resources scoped to this package, flattened like the offering-level ones.
-    dataResources: { type: [ResourceSchema], default: undefined },
-    softwareResources: { type: [ResourceSchema], default: undefined },
-  },
-  { _id: false },
-);
-
 const OfferingSchema = new Schema({
     participant: { type: String, required: true },
     serviceOffering: { type: String, required: true },
@@ -450,11 +443,6 @@ const OfferingSchema = new Schema({
         },
         { _id: false },
     ),
-
-    // Pricing variants of the offering. Mirrors the catalog's IPackage shape
-    // (flat pricing fields) rather than the offering-level `pricing` object,
-    // so a package can be diffed against its catalog counterpart directly.
-    packages: { type: [PackageSchema], default: undefined },
 
     // Service Levels SLAs
     sla: new Schema(
@@ -498,8 +486,6 @@ const OfferingSchema = new Schema({
                 },
                 { _id: false },
             ),
-            // Aligned on ServiceOffering.sla: a numeric retention, while the
-            // duration enum moved to `availabilityPeriod`.
             retentionPeriod: { type: Number },
             availabilityPeriod: {
                 type: String,
@@ -512,7 +498,6 @@ const OfferingSchema = new Schema({
                     'Until consent withdrawal',
                 ],
             },
-            // Kept for legacy contracts only: the catalog no longer sources it.
             generalAvailabilityDate: { type: Date },
             endOfSupportDate: {
                 type: String,
@@ -685,14 +670,10 @@ const OfferingSchema = new Schema({
         { _id: false },
     ),
 
-    // Additional clauses at offering level (same structure as root additionalClauses)
-    additionalClauses: { type: AdditionalClausesSchema, default: null },
-
     // Free-form custom fields for sector-specific data (legal, healthcare, finance, etc.)
     // Sourced from the service offering's customFields and carried over at contract generation.
     customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 });
-
 
 export const ContractSchema: Schema = new Schema(
   {
@@ -720,19 +701,11 @@ export const ContractSchema: Schema = new Schema(
     // Sourced from the ecosystem's customFields and carried over at contract generation.
     customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 
-    // ─── Versioning (declared, not yet wired) ─────────────────────────────
-    // Version of this contract within its lineage, used for amendments.
     version: String,
 
-    // Previous and next version of this contract. Both are single references on
-    // purpose: a lineage is linear, since an amended version supersedes the
-    // previous one. `child: null` therefore identifies the current version.
     parent: { type: Schema.Types.ObjectId, ref: 'Contract', default: null },
     child: { type: Schema.Types.ObjectId, ref: 'Contract', default: null },
 
-    // First contract of the lineage, carried by every version. Lets the whole
-    // history be retrieved in a single indexed query rather than by walking
-    // parent/child pointers one document at a time.
     rootContract: {
       type: Schema.Types.ObjectId,
       ref: 'Contract',
@@ -746,7 +719,6 @@ export const ContractSchema: Schema = new Schema(
   },
 );
 
-// Retrieve a full lineage ordered by version in one query.
 ContractSchema.index({ rootContract: 1, version: 1 });
 
 export default mongoose.model<IContractDB>(

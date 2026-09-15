@@ -156,13 +156,6 @@ describe('Backward compatibility of the flattened contract', () => {
         piiInformation: { dataUserRole: 'dataProcessor' },
       },
     ],
-    packages: [
-      {
-        pricing: 99.9,
-        currency: 'EUR',
-        billingPeriod: 'monthly',
-      },
-    ],
     customFields: { sector: 'healthcare' },
   });
 
@@ -430,7 +423,6 @@ describe('Backward compatibility of the flattened contract', () => {
       expect(offering.sla.endOfSupportDate).to.equal(
         '30 days after contract ends',
       );
-      expect(offering.packages[0].pricing).to.equal(99.9);
       expect(offering.customFields.sector).to.equal('healthcare');
 
       const dataResource = offering.dataResources[0];
@@ -563,8 +555,133 @@ describe('Backward compatibility of the flattened contract', () => {
     });
   });
 
+  describe('a service chain step survives a round trip', () => {
+    const chainStep = () => ({
+      participant: 'http://catalog.test/v1/catalog/participants/p-1',
+      service: 'http://catalog.test/v1/catalog/serviceofferings/offer-1',
+      params: 'q=1',
+      configuration: 'infra-conf-1',
+      incentivePoints: 5,
+      pre: [],
+    });
+
+    it('keeps every key a deployed connector reads', async () => {
+      const id = await insertLegacyContract(legacyContract());
+
+      const response = await supertest(app.router)
+        .post(`${API_ROUTE_BASE}${id}/servicechains`)
+        .set('Cookie', authTokenCookie)
+        .send([
+          {
+            catalogId: 'chain-1',
+            serviceChainId: 'chain-1',
+            services: [chainStep()],
+          },
+        ]);
+      expect(response.status).to.equal(200);
+
+      const chain = (await getContract(id)).serviceChains.find(
+        (c: any) => c.serviceChainId === 'chain-1',
+      );
+      const step = chain.services[0];
+
+      expect(step.service).to.equal(chainStep().service);
+      expect(step.participant).to.equal(chainStep().participant);
+      expect(step.params).to.equal('q=1');
+      expect(
+        step.configuration,
+        'configuration dropped: the connector loses the node infrastructure config',
+      ).to.equal('infra-conf-1');
+      expect(
+        step.incentivePoints,
+        'incentivePoints dropped: DVCT reward shares are lost',
+      ).to.equal(5);
+      expect(step.pre).to.be.an('array');
+    });
+
+    it('accepts a step that carries neither participant nor service', async () => {
+      const id = await insertLegacyContract(legacyContract());
+
+      const response = await supertest(app.router)
+        .post(`${API_ROUTE_BASE}${id}/servicechains`)
+        .set('Cookie', authTokenCookie)
+        .send([{ serviceChainId: 'chain-2', services: [{ params: 'q=2' }] }]);
+
+      expect(response.status).to.equal(200);
+    });
+
+    it('links serviceOffering to the matching offering subdocument', async () => {
+      const id = await insertLegacyContract(legacyContract());
+      const { serviceOffering } = legacyContract().serviceOfferings[0];
+
+      await supertest(app.router)
+        .post(`${API_ROUTE_BASE}${id}/servicechains`)
+        .set('Cookie', authTokenCookie)
+        .send([
+          {
+            serviceChainId: 'chain-3',
+            services: [{ ...chainStep(), service: serviceOffering }],
+          },
+        ]);
+
+      const contract = await getContract(id);
+      const chain = contract.serviceChains.find(
+        (c: any) => c.serviceChainId === 'chain-3',
+      );
+
+      expect(
+        chain.services[0].serviceOffering,
+        'the link was not resolved server-side',
+      ).to.equal(contract.serviceOfferings[0]._id);
+    });
+
+    it('keeps the link stable across reads on a legacy contract', async () => {
+      const id = await insertLegacyContract(legacyContract());
+      const { serviceOffering } = legacyContract().serviceOfferings[0];
+
+      await supertest(app.router)
+        .post(`${API_ROUTE_BASE}${id}/servicechains`)
+        .set('Cookie', authTokenCookie)
+        .send([
+          {
+            serviceChainId: 'chain-4',
+            services: [{ ...chainStep(), service: serviceOffering }],
+          },
+        ]);
+
+      const first = await getContract(id);
+      const second = await getContract(id);
+
+      const linkOf = (contract: any) =>
+        contract.serviceChains.find((c: any) => c.serviceChainId === 'chain-4')
+          .services[0].serviceOffering;
+
+      expect(
+        linkOf(second),
+        'the offering _id was not persisted, the link rots between reads',
+      ).to.equal(linkOf(first));
+      expect(linkOf(second)).to.equal(second.serviceOfferings[0]._id);
+    });
+
+    it('leaves the link null when the offering is not in the contract', async () => {
+      const id = await insertLegacyContract(legacyContract());
+
+      await supertest(app.router)
+        .post(`${API_ROUTE_BASE}${id}/servicechains`)
+        .set('Cookie', authTokenCookie)
+        .send([{ serviceChainId: 'chain-5', services: [chainStep()] }]);
+
+      const chain = (await getContract(id)).serviceChains.find(
+        (c: any) => c.serviceChainId === 'chain-5',
+      );
+
+      expect(chain.services[0].serviceOffering ?? null).to.equal(null);
+      expect(chain.services[0].service).to.be.a('string');
+    });
+  });
+
   // ══════════════════════════════════════════════════════════════════════════
-  // Versioning fields are optional
+  // A contract must stay readable whatever its status
   // ══════════════════════════════════════════════════════════════════════════
   describe('versioning fields never break a legacy contract', () => {
     it('reads a legacy contract that has none of them', async () => {

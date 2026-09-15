@@ -330,8 +330,6 @@ export const injectOfferingPolicies = async (
     const contractId: string = req.params.id;
     const { serviceOffering, policies, participant } = req.body;
     if (contractId && serviceOffering && participant && policies) {
-      // Whitelist the flattened catalog fields out of the body, so an unexpected
-      // key can never reach the offering subdocument.
       const flattened: IContractOfferingFlattenedFields = {};
       for (const key of CONTRACT_OFFERING_FLATTENED_KEYS) {
         if (req.body[key] !== undefined) {
@@ -583,20 +581,18 @@ export const getValidatedContract = async (req: Request, res: Response) => {
     }
 
     const requesterOrigin =
-      (req.headers.origin as string) ||
-      (req.headers.referer as string) ||
-      null;
+      (req.headers.origin as string) || (req.headers.referer as string) || null;
 
     if (!requesterOrigin) {
       return res.status(400).json({
-        error: 'Unable to identify the requester: no origin or referer header found.',
+        error:
+          'Unable to identify the requester: no origin or referer header found.',
       });
     }
 
     const requesterMember = (contract.members as IContractMember[]).find(
       (m) =>
-        m.dataspaceEndpoint &&
-        requesterOrigin.startsWith(m.dataspaceEndpoint),
+        m.dataspaceEndpoint && requesterOrigin.startsWith(m.dataspaceEndpoint),
     );
 
     if (!requesterMember) {
@@ -609,29 +605,22 @@ export const getValidatedContract = async (req: Request, res: Response) => {
     }
 
     if (hasResourceAndPurpose) {
-      // Find the offering that owns the resource, looking through the legacy
-      // generic array, the typed arrays, and any package-scoped resources.
-      const offeringWithResource = contract.serviceOfferings.find((offering) => {
-        const o = offering as typeof offering &
-          IContractOfferingFlattenedFields;
-        const holdsResource = (resources?: unknown[]) =>
-          (resources ?? []).some(
-            (r) => (r as { resourceId?: string })?.resourceId === resourceId,
-          );
-
-        return (
-          holdsResource(o.resources) ||
-          holdsResource(o.dataResources) ||
-          holdsResource(o.softwareResources) ||
-          (o.packages ?? []).some((pkg) => {
-            const p = pkg as IContractOfferingFlattenedFields;
-            return (
-              holdsResource(p.dataResources) ||
-              holdsResource(p.softwareResources)
+      const offeringWithResource = contract.serviceOfferings.find(
+        (offering) => {
+          const o = offering as typeof offering &
+            IContractOfferingFlattenedFields;
+          const holdsResource = (resources?: unknown[]) =>
+            (resources ?? []).some(
+              (r) => (r as { resourceId?: string })?.resourceId === resourceId,
             );
-          })
-        );
-      });
+
+          return (
+            holdsResource(o.resources) ||
+            holdsResource(o.dataResources) ||
+            holdsResource(o.softwareResources)
+          );
+        },
+      );
 
       if (!offeringWithResource) {
         return res.status(403).json({
@@ -661,11 +650,9 @@ export const getValidatedContract = async (req: Request, res: Response) => {
     }
 
     if (hasServiceChain) {
-      // Match on either key: `catalogId` is what deployed connectors send.
       const chain = contract.serviceChains.find(
         (c) =>
-          c.serviceChainId === serviceChainId ||
-          c.catalogId === serviceChainId,
+          c.serviceChainId === serviceChainId || c.catalogId === serviceChainId,
       );
 
       if (!chain) {

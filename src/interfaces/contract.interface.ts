@@ -63,7 +63,6 @@ export type IContractOfferingFlattenedFields = {
   resources?: unknown[];
   dataResources?: unknown[];
   softwareResources?: unknown[];
-  packages?: unknown[];
   pricing?: Record<string, unknown>;
   sla?: Record<string, unknown>;
   commitments?: unknown[];
@@ -71,7 +70,6 @@ export type IContractOfferingFlattenedFields = {
   terminationForConvenience?: Record<string, unknown>;
   terminationForCause?: Record<string, unknown>;
   penaltiesTerminationLink?: Record<string, unknown>;
-  additionalClauses?: Record<string, unknown> | null;
   customFields?: unknown;
 };
 
@@ -85,7 +83,6 @@ export const CONTRACT_OFFERING_FLATTENED_KEYS: ReadonlyArray<
   'resources',
   'dataResources',
   'softwareResources',
-  'packages',
   'pricing',
   'sla',
   'commitments',
@@ -93,10 +90,71 @@ export const CONTRACT_OFFERING_FLATTENED_KEYS: ReadonlyArray<
   'terminationForConvenience',
   'terminationForCause',
   'penaltiesTerminationLink',
-  'additionalClauses',
   'customFields',
 ];
 
 // Extends the generated ContractServiceOffering with the flattened catalog data
 export type IContractServiceOffering = ContractServiceOffering &
   IContractOfferingFlattenedFields;
+
+/**
+ * One step of a service chain. `participant` and `service` are the catalog
+ * URLs used by the Data Processing Chain Protocol at exchange time; they are
+ * kept for backward compatibility with existing contracts and orchestrator
+ * payloads.
+ *
+ * `params`, `configuration` and `incentivePoints` are read as-is by deployed
+ * connectors and must survive a round trip untouched.
+ *
+ * `serviceOffering` is the strong, typed link to the offering this step runs:
+ * it stores the `_id` Mongoose generates on the matching subdocument in
+ * `contract.serviceOfferings`, not the catalog id — two contracts referencing
+ * the same catalog offering hold distinct subdocuments. Callers never send it,
+ * the contract service fills it from `service` on every chain write. It is
+ * `null` on legacy steps that predate this field, resolve those with
+ * `resolveServiceChainOffering`.
+ */
+export type IContractServiceChainStep = {
+  participant?: string;
+  service?: string;
+  serviceOffering?: mongoose.Types.ObjectId | null;
+  params?: string;
+  configuration?: string;
+  incentivePoints?: number;
+  pre?: unknown[];
+};
+
+export type IContractServiceChain = {
+  catalogId?: string;
+  serviceChainId?: string;
+  services: IContractServiceChainStep[];
+};
+
+/**
+ * Resolves the `serviceOfferings` subdocument a service chain step refers to.
+ *
+ * Tries the typed `serviceOffering` id first (fast, unambiguous). Falls back to
+ * matching `step.service` against `offering.serviceOffering` (the catalog URL)
+ * for contracts created before the link existed.
+ */
+export function resolveServiceChainOffering(
+  contract: Pick<IContract, 'serviceOfferings'>,
+  step: IContractServiceChainStep,
+): IContractServiceOffering | undefined {
+  const offerings = (contract.serviceOfferings ?? []) as Array<
+    IContractServiceOffering & { _id?: mongoose.Types.ObjectId }
+  >;
+
+  if (step.serviceOffering) {
+    const byId = offerings.find((offering) =>
+      offering._id?.equals(step.serviceOffering as mongoose.Types.ObjectId),
+    );
+    if (byId) {
+      return byId;
+    }
+  }
+
+  return offerings.find(
+    (offering) => offering.serviceOffering === step.service,
+  );
+}

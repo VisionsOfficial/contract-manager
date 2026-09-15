@@ -5,6 +5,7 @@ import {
   IContract,
   IContractDB,
   IContractOfferingFlattenedFields,
+  IContractServiceChainStep,
 } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
 import { logger } from 'utils/logger';
@@ -578,9 +579,8 @@ export class ContractService {
    * catalog data carried alongside them.
    *
    * The flattened fields are merged, never replaced wholesale: a key absent from
-   * `flattened` leaves the persisted value untouched. This keeps an injection
-   * that only carries policies — every deployed caller before this change —
-   * from wiping data a previous injection had frozen.
+   * `flattened` leaves the persisted value untouched, so an injection carrying
+   * only policies never wipes data a previous one froze.
    */
   public async addOfferingPolicies(
     contractId: string,
@@ -644,11 +644,9 @@ export class ContractService {
   /**
    * Copies the flattened catalog fields onto an offering subdocument.
    *
-   * Only keys explicitly present and not `undefined`/`null` are written, so an
-   * absent key preserves whatever is already frozen in the contract. `null` is
-   * treated as "not provided" rather than "clear it", because senders build the
-   * payload from optional model fields and a cleared value is never meaningful
-   * for a contract that is supposed to be a frozen record.
+   * Only keys present and not `undefined`/`null` are written. `null` reads as
+   * "not provided" rather than "clear it": senders build the payload from
+   * optional model fields, and clearing is never meaningful on a frozen record.
    */
   private static mergeOfferingFlattenedFields(
     offering: ContractServiceOfferingDocument,
@@ -717,6 +715,41 @@ export class ContractService {
   }
 
   // update data chains
+  /**
+   * Fills each step's `serviceOffering` with the `_id` of the matching
+   * subdocument in `contract.serviceOfferings`, matched on the step's catalog
+   * URL. Callers only know catalog URLs, never the ids Mongoose generates, so
+   * the link is always established here. A step whose offering is not in the
+   * contract keeps a null link and stays usable through `service`.
+   *
+   * Offerings of a contract written before this field existed carry no `_id` in
+   * the database: Mongoose mints one on hydration, which would make the link
+   * point at an id that is never stored. Marking the array modified persists
+   * those ids once, so the link stays valid on later reads.
+   */
+  private static linkServiceChainOfferings(
+    contract: IContractDB,
+    chain: ContractServiceChain,
+  ): void {
+    const offerings = contract.serviceOfferings ?? [];
+    let linked = false;
+
+    for (const step of (chain?.services ?? []) as IContractServiceChainStep[]) {
+      const match = offerings.find(
+        (offering) => offering.serviceOffering === step.service,
+      );
+      const id = (match as { _id?: Types.ObjectId })?._id ?? null;
+      step.serviceOffering = id;
+      if (id) {
+        linked = true;
+      }
+    }
+
+    if (linked) {
+      contract.markModified('serviceOfferings');
+    }
+  }
+
   public async writeServiceChains(
     contractId: string,
     chains: ContractServiceChain[],
@@ -725,6 +758,9 @@ export class ContractService {
       const contract = await Contract.findById(contractId);
       if (!contract) {
         throw new Error('Contract not found');
+      }
+      for (const chain of chains ?? []) {
+        ContractService.linkServiceChainOfferings(contract, chain);
       }
       contract.set('serviceChains', chains);
       await contract.save();
@@ -746,6 +782,7 @@ export class ContractService {
             (element) => element.serviceChainId === chain.serviceChainId,
           )
         ) {
+          ContractService.linkServiceChainOfferings(contract, chain);
           contract.serviceChains.push(chain);
         } else {
           throw new Error('Active same data chain already exists');
@@ -772,6 +809,7 @@ export class ContractService {
           (item) => item.serviceChainId!.toString() === chainId,
         );
         if (existingProcessing) {
+          ContractService.linkServiceChainOfferings(contract, chain);
           contract.serviceChains.push(chain);
           await contract.save();
           return contract.serviceChains;
