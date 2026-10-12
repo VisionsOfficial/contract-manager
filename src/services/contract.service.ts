@@ -1,6 +1,11 @@
 import mongoose, { Schema, Types } from 'mongoose';
 
-import { IContract, IContractDB } from 'interfaces/contract.interface';
+import {
+  CONTRACT_OFFERING_FLATTENED_KEYS,
+  IContract,
+  IContractDB,
+  IContractOfferingFlattenedFields,
+} from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
 import { logger } from 'utils/logger';
 import {
@@ -64,7 +69,7 @@ export class ContractService {
   public async getContract(contractId: string): Promise<IContractDB | null> {
     try {
       const contract = await Contract.findById(contractId)
-        .select('-jsonLD')
+        .select('-jsonLD -version -parent -child -rootContract')
         .lean();
       return contract;
     } catch (error) {
@@ -568,11 +573,21 @@ export class ContractService {
     }
   }
 
+  /**
+   * Adds policies to an offering of the contract, and freezes the flattened
+   * catalog data carried alongside them.
+   *
+   * The flattened fields are merged, never replaced wholesale: a key absent from
+   * `flattened` leaves the persisted value untouched. This keeps an injection
+   * that only carries policies — every deployed caller before this change —
+   * from wiping data a previous injection had frozen.
+   */
   public async addOfferingPolicies(
     contractId: string,
     serviceOffering: string,
     participant: string,
     injections: IPolicyInjection[],
+    flattened?: IContractOfferingFlattenedFields,
   ): Promise<IContractDB | null> {
     try {
       const contract = await Contract.findById(contractId);
@@ -598,6 +613,8 @@ export class ContractService {
           contract.serviceOfferings[contract.serviceOfferings.length - 1];
       }
 
+      ContractService.mergeOfferingFlattenedFields(offering, flattened);
+
       offering.policies.push(
         ...(await Promise.all(
           injections.map(async (injection) => {
@@ -621,6 +638,32 @@ export class ContractService {
     } catch (error: any) {
       logger.error('[Contract/Service, addOfferingPolicies]:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Copies the flattened catalog fields onto an offering subdocument.
+   *
+   * Only keys explicitly present and not `undefined`/`null` are written, so an
+   * absent key preserves whatever is already frozen in the contract. `null` is
+   * treated as "not provided" rather than "clear it", because senders build the
+   * payload from optional model fields and a cleared value is never meaningful
+   * for a contract that is supposed to be a frozen record.
+   */
+  private static mergeOfferingFlattenedFields(
+    offering: ContractServiceOfferingDocument,
+    flattened?: IContractOfferingFlattenedFields,
+  ): void {
+    if (!flattened) {
+      return;
+    }
+
+    for (const key of CONTRACT_OFFERING_FLATTENED_KEYS) {
+      const value = flattened[key];
+      if (value === undefined || value === null) {
+        continue;
+      }
+      offering.set(key, value);
     }
   }
 

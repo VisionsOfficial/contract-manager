@@ -1161,7 +1161,7 @@ export type ContractServiceOfferingDocument =
       endOfLifeDate?: Date;
       supportChannels?: ('Email' | 'Phone' | 'Chat' | 'Ticketing portal' | 'Slack' | 'Community forum' | 'Dedicated CSM')[];
       supportServiceHours?: '24/7' | 'Business hours 5x8' | 'Extended 5x12';
-      supportSeverityLevel?: { level?: 'Critical' | 'High' | 'Medium' | 'Low'; responseTimeValue?: number; responseTimeUnit?: string };
+      supportSeverityLevel?: { level?: 'Critical' | 'High' | 'Medium' | 'Low'; responseTimeValue?: number; responseTimeUnit?: string }[];
       measurementMonitoringMethod?: string;
       note?: string;
     };

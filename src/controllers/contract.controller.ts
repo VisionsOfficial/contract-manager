@@ -1,6 +1,12 @@
 // Ecosystem Contract Controller
 import { Request, Response } from 'express';
-import { IContract, IContractDB } from 'interfaces/contract.interface';
+import {
+  CONTRACT_OFFERING_FLATTENED_KEYS,
+  IContract,
+  IContractDB,
+  IContractMember,
+  IContractOfferingFlattenedFields,
+} from 'interfaces/contract.interface';
 import { ContractService } from 'services/contract.service';
 import { logger } from 'utils/logger';
 import { validationResult } from 'express-validator';
@@ -27,11 +33,19 @@ export const createContract = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * Get contract by id
+ * @description this route stays unconditional on purpose. Deployed connectors (>= 1.11.0) fetch the contract here with a plain GET and must be able to read `pending` and `revoked` contracts. Status-based access control lives  in `getValidatedContract` (POST /contracts/:id/validate), which is opt-in.
+ * @param req
+ * @param res
+ */
 export const getContract = async (req: Request, res: Response) => {
   const contractService = await ContractService.getInstance();
   try {
     const contractId: string = req.params.id;
     const contract = await contractService.getContract(contractId);
+
     if (!contract) {
       return res.status(404).json({ error: 'Contract not found.' });
     }
@@ -316,11 +330,21 @@ export const injectOfferingPolicies = async (
     const contractId: string = req.params.id;
     const { serviceOffering, policies, participant } = req.body;
     if (contractId && serviceOffering && participant && policies) {
+      // Whitelist the flattened catalog fields out of the body, so an unexpected
+      // key can never reach the offering subdocument.
+      const flattened: IContractOfferingFlattenedFields = {};
+      for (const key of CONTRACT_OFFERING_FLATTENED_KEYS) {
+        if (req.body[key] !== undefined) {
+          flattened[key] = req.body[key];
+        }
+      }
+
       const updatedContract = await contractService.addOfferingPolicies(
         contractId,
         serviceOffering,
         participant,
         policies,
+        flattened,
       );
       res.status(200).json({ contract: updatedContract });
     } else {
@@ -506,5 +530,178 @@ export const deleteServiceChain = async (req: Request, res: Response) => {
     res.status(500).json({
       error: 'An error occurred while deleting service chain.',
     });
+  }
+};
+
+/**
+ * Get the validated contract by id
+ * The body must contain either (resourceId and purposeId) or serviceChainId to validate the contract.
+ * The contract must be in a valid state (not revoked or pending) and must contain the specified resource, purpose, or service chain.
+ * The participant of the resource or service chain must be a member of the contract.
+ * The incoming request must be from a member of the contract.
+ * @param req
+ * @param res
+ */
+export const getValidatedContract = async (req: Request, res: Response) => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const contractId: string = req.params.id;
+    const { resourceId, purposeId, serviceChainId } = req.body;
+
+    const hasResourceAndPurpose = resourceId && purposeId;
+    const hasServiceChain = !!serviceChainId;
+
+    if (!hasResourceAndPurpose && !hasServiceChain) {
+      return res.status(400).json({
+        error:
+          'You must provide either (resourceId and purposeId) or serviceChainId.',
+      });
+    }
+
+    const contract = await contractService.getContract(contractId);
+
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found.' });
+    }
+
+    if (contract.status === 'revoked') {
+      logger.warn(
+        `[Contract/Controller: getValidatedContract] Contract ${contractId} is revoked.`,
+      );
+      return res.status(403).json({
+        error: 'Contract is revoked and can no longer be accessed.',
+      });
+    }
+
+    if (contract.status === 'pending') {
+      logger.warn(
+        `[Contract/Controller: getValidatedContract] Contract ${contractId} is still pending.`,
+      );
+      return res.status(403).json({
+        error: 'Contract is pending and has not been signed yet.',
+      });
+    }
+
+    const requesterOrigin =
+      (req.headers.origin as string) ||
+      (req.headers.referer as string) ||
+      null;
+
+    if (!requesterOrigin) {
+      return res.status(400).json({
+        error: 'Unable to identify the requester: no origin or referer header found.',
+      });
+    }
+
+    const requesterMember = (contract.members as IContractMember[]).find(
+      (m) =>
+        m.dataspaceEndpoint &&
+        requesterOrigin.startsWith(m.dataspaceEndpoint),
+    );
+
+    if (!requesterMember) {
+      logger.warn(
+        `[Contract/Controller: getValidatedContract] Requester '${requesterOrigin}' is not a member of contract ${contractId}.`,
+      );
+      return res.status(403).json({
+        error: `Requester '${requesterOrigin}' is not a member of this contract.`,
+      });
+    }
+
+    if (hasResourceAndPurpose) {
+      // Find the offering that owns the resource, looking through the legacy
+      // generic array, the typed arrays, and any package-scoped resources.
+      const offeringWithResource = contract.serviceOfferings.find((offering) => {
+        const o = offering as typeof offering &
+          IContractOfferingFlattenedFields;
+        const holdsResource = (resources?: unknown[]) =>
+          (resources ?? []).some(
+            (r) => (r as { resourceId?: string })?.resourceId === resourceId,
+          );
+
+        return (
+          holdsResource(o.resources) ||
+          holdsResource(o.dataResources) ||
+          holdsResource(o.softwareResources) ||
+          (o.packages ?? []).some((pkg) => {
+            const p = pkg as IContractOfferingFlattenedFields;
+            return (
+              holdsResource(p.dataResources) ||
+              holdsResource(p.softwareResources)
+            );
+          })
+        );
+      });
+
+      if (!offeringWithResource) {
+        return res.status(403).json({
+          error: `Resource '${resourceId}' was not found in the contract's service offerings.`,
+        });
+      }
+
+      // Verify the offering's participant is a contract member
+      const participantIsMember = contract.members.some(
+        (m) => m.participant === offeringWithResource.participant,
+      );
+
+      if (!participantIsMember) {
+        return res.status(403).json({
+          error: `Participant '${offeringWithResource.participant}' of resource '${resourceId}' is not a member of this contract.`,
+        });
+      }
+
+      // Verify the purpose exists in the contract
+      const purposeExists = contract.purpose.some((p) => p.uid === purposeId);
+
+      if (!purposeExists) {
+        return res.status(403).json({
+          error: `Purpose '${purposeId}' was not found in the contract.`,
+        });
+      }
+    }
+
+    if (hasServiceChain) {
+      // Match on either key: `catalogId` is what deployed connectors send.
+      const chain = contract.serviceChains.find(
+        (c) =>
+          c.serviceChainId === serviceChainId ||
+          c.catalogId === serviceChainId,
+      );
+
+      if (!chain) {
+        return res.status(403).json({
+          error: `Service chain '${serviceChainId}' was not found in the contract.`,
+        });
+      }
+
+      // Verify each participant of the chain's services is a contract member
+      const memberParticipants = new Set(
+        contract.members.map((m) => m.participant),
+      );
+
+      const chainParticipants: string[] = (chain.services ?? [])
+        .map((s) => (s as { participant?: string })?.participant)
+        .filter((p): p is string => Boolean(p));
+
+      const nonMemberParticipant = chainParticipants.find(
+        (p) => !memberParticipants.has(p),
+      );
+
+      if (nonMemberParticipant) {
+        return res.status(403).json({
+          error: `Participant '${nonMemberParticipant}' of service chain '${serviceChainId}' is not a member of this contract.`,
+        });
+      }
+    }
+
+    logger.info(
+      '[Contract/Controller: getValidatedContract] Successfully called.',
+    );
+    return res.json(contract);
+  } catch (error) {
+    logger.error('Error retrieving the validated contract:', error);
+    res
+      .status(500)
+      .json({ error: 'An error occurred while retrieving the contract.' });
   }
 };
