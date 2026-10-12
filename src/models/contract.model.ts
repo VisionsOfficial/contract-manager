@@ -375,6 +375,11 @@ const OfferingSchema = new Schema({
   customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 });
 
+// Add the piiAssignments field to the OfferingSchema
+OfferingSchema.add({
+    piiAssignments: { type: [OfferingSchema], default: [] },
+});
+
 const MemberSchema = new Schema(
   {
     participant: { type: String, required: true },
