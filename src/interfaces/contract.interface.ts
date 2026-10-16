@@ -97,6 +97,25 @@ export const CONTRACT_OFFERING_FLATTENED_KEYS: ReadonlyArray<
   'customFields',
 ];
 
+/**
+ * Reference from a personal-data offering to a service offering processing it.
+ * Both values are the self-descriptions used in `serviceOfferings`.
+ */
+export type IContractPiiAssignment = {
+  serviceOffering: string;
+  participant?: string;
+};
+
+/**
+ * A PII assignment as returned when reading a contract: the reference plus the
+ * matching entry of `serviceOfferings`, or `null` when it is not in the contract.
+ */
+export type IPopulatedContractPiiAssignment = IContractPiiAssignment & {
+  offering: Record<string, unknown> | null;
+};
+
 // Extends the generated ContractServiceOffering with the flattened catalog data
 export type IContractServiceOffering = ContractServiceOffering &
-  IContractOfferingFlattenedFields;
+  IContractOfferingFlattenedFields & {
+    piiAssignments?: IContractPiiAssignment[];
+  };
