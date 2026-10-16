@@ -15,6 +15,7 @@ import {
   checkExploitationByRole,
   getPolicyForServiceOffering,
   removeOfferingPolicies,
+  setOfferingPiiAssignments,
   getServiceChains,
   writeServiceChains,
   insertServiceChain,
@@ -59,6 +60,18 @@ router.delete(
     check('participantId').isString(),
   ],
   removeOfferingPolicies,
+);
+// Replace the PII assignments of a personal-data offering
+router.put(
+  '/contracts/:id/offerings/pii-assignments',
+  [
+    check('serviceOffering').isString().notEmpty(),
+    check('participant').isString().notEmpty(),
+    check('piiAssignments').isArray(),
+    check('piiAssignments.*.serviceOffering').isString().notEmpty(),
+    check('piiAssignments.*.participant').optional().isString(),
+  ],
+  setOfferingPiiAssignments,
 );
 
 // List the service chains within the chain available on the contrat

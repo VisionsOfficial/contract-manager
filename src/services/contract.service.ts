@@ -5,6 +5,8 @@ import {
   IContract,
   IContractDB,
   IContractOfferingFlattenedFields,
+  IContractPiiAssignment,
+  IPopulatedContractPiiAssignment,
 } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
 import { logger } from 'utils/logger';
@@ -665,6 +667,94 @@ export class ContractService {
       }
       offering.set(key, value);
     }
+  }
+
+  /**
+   * Replaces the PII assignments of a personal-data offering of the contract.
+   *
+   * The catalog is the source of truth for the pairings, so the whole list is
+   * sent on every change and stored as is: replaying a call is harmless.
+   * Returns `null` when the contract or the offering does not exist.
+   */
+  public async setOfferingPiiAssignments(
+    contractId: string,
+    serviceOffering: string,
+    participant: string,
+    piiAssignments: IContractPiiAssignment[],
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        return null;
+      }
+
+      const offering = contract.serviceOfferings.find(
+        (entry: ContractServiceOffering) =>
+          entry.serviceOffering === serviceOffering &&
+          entry.participant === participant,
+      );
+      if (!offering) {
+        return null;
+      }
+
+      offering.set(
+        'piiAssignments',
+        piiAssignments.map(({ serviceOffering, participant }) => ({
+          serviceOffering,
+          participant,
+        })),
+      );
+
+      return await contract.save();
+    } catch (error: any) {
+      logger.error('[Contract/Service, setOfferingPiiAssignments]:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Resolves the PII assignment references of every offering of a contract
+   * against the contract's own serviceOfferings, so the offering data is
+   * returned without being duplicated in the database.
+   */
+  public static populatePiiAssignments<T>(contract: T): T {
+    const plain: any =
+      contract && typeof (contract as any).toObject === 'function'
+        ? (contract as any).toObject()
+        : contract;
+    if (!plain || !Array.isArray(plain.serviceOfferings)) {
+      return plain;
+    }
+
+    const offerings: any[] = plain.serviceOfferings;
+    plain.serviceOfferings = offerings.map((offering: any) => {
+      if (!Array.isArray(offering.piiAssignments)) {
+        return offering;
+      }
+      return {
+        ...offering,
+        piiAssignments: offering.piiAssignments.map(
+          (
+            assignment: IContractPiiAssignment,
+          ): IPopulatedContractPiiAssignment => {
+            const target = offerings.find(
+              (entry: any) =>
+                entry.serviceOffering === assignment.serviceOffering &&
+                (!assignment.participant ||
+                  entry.participant === assignment.participant),
+            );
+            if (!target) {
+              return { ...assignment, offering: null };
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { piiAssignments, ...resolved } = target;
+            return { ...assignment, offering: resolved };
+          },
+        ),
+      };
+    });
+
+    return plain;
   }
 
   public async removeOfferingPolicies(

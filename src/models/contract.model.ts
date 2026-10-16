@@ -693,9 +693,19 @@ const OfferingSchema = new Schema({
     customFields: { type: mongoose.Schema.Types.Mixed, default: null },
 });
 
-// Add the piiAssignments field to the OfferingSchema
+// A personal-data offering paired with the service offerings processing it.
+// Only references are stored: each one points to an entry of the contract's
+// serviceOfferings and is resolved when the contract is read.
+const PiiAssignmentSchema = new Schema(
+  {
+    serviceOffering: { type: String, required: true },
+    participant: { type: String },
+  },
+  { _id: false },
+);
+
 OfferingSchema.add({
-    piiAssignments: { type: [OfferingSchema], default: [] },
+    piiAssignments: { type: [PiiAssignmentSchema], default: [] },
 });
 
 export const ContractSchema: Schema = new Schema(
