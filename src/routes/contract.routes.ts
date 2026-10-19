@@ -65,6 +65,7 @@ router.delete(
 router.put(
   '/contracts/:id/offerings/pii-assignments',
   [
+    check('id').isMongoId(),
     check('serviceOffering').isString().notEmpty(),
     check('participant').isString().notEmpty(),
     check('piiAssignments').isArray(),
