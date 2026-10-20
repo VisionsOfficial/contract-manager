@@ -114,6 +114,22 @@ export type IPopulatedContractPiiAssignment = IContractPiiAssignment & {
   offering: Record<string, unknown> | null;
 };
 
+/**
+ * References between contract offerings that `populateOffers` can resolve.
+ * A new reference (e.g. a service chain step) only needs a key here and a
+ * populator in the contract model.
+ */
+export type IContractOfferPopulation = 'piiAssignments';
+
+export type IContractStatics = {
+  /**
+   * Resolves the references between the offerings of a contract against its
+   * own serviceOfferings. Every population runs unless some are given.
+   * Returns a plain object, whether it receives a document or a lean result.
+   */
+  populateOffers<T>(contract: T, populations?: IContractOfferPopulation[]): T;
+};
+
 // Extends the generated ContractServiceOffering with the flattened catalog data
 export type IContractServiceOffering = ContractServiceOffering &
   IContractOfferingFlattenedFields & {

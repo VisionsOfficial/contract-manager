@@ -7,6 +7,7 @@ import {
   IContractMember,
   IContractOfferingFlattenedFields,
 } from 'interfaces/contract.interface';
+import Contract from 'models/contract.model';
 import { ContractService } from 'services/contract.service';
 import { logger } from 'utils/logger';
 import { validationResult } from 'express-validator';
@@ -50,7 +51,7 @@ export const getContract = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Contract not found.' });
     }
     logger.info('[Contract/Controller: getContract] Successfully called.');
-    return res.json(ContractService.populatePiiAssignments(contract));
+    return res.json(Contract.populateOffers(contract));
   } catch (error) {
     logger.error('Error retrieving the contract:', error);
     res
@@ -214,7 +215,9 @@ export const getContractsFor = async (
     );
     logger.info('[Contract/Controller: getContractsFor] Successfully called.');
     res.status(200).json({
-      contracts: contracts.map(ContractService.populatePiiAssignments),
+      contracts: contracts.map((contract) =>
+        Contract.populateOffers(contract),
+      ),
     });
   } catch (error: any) {
     logger.error('Error while fetching contracts for the given DID:', {
@@ -234,7 +237,9 @@ export const getContracts = async (
     const contracts: IContractDB[] = await contractService.getContracts(status);
     logger.info('[Contract/Controller: getAllContracts] Successfully called.');
     res.status(200).json({
-      contracts: contracts.map(ContractService.populatePiiAssignments),
+      contracts: contracts.map((contract) =>
+        Contract.populateOffers(contract),
+      ),
     });
   } catch (error: any) {
     logger.error('Error while fetching all contract:', { error });
@@ -387,9 +392,7 @@ export const setOfferingPiiAssignments = async (
       res.status(404).json({ error: 'Contract or offering not found.' });
       return;
     }
-    res
-      .status(200)
-      .json({ contract: ContractService.populatePiiAssignments(contract) });
+    res.status(200).json({ contract: Contract.populateOffers(contract) });
   } catch (error) {
     logger.error(
       '[Contract/Controller/setOfferingPiiAssignments] Error while setting PII assignments:',

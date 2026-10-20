@@ -1,5 +1,11 @@
 import mongoose, { Schema } from 'mongoose';
-import { IContractDB } from '../interfaces/contract.interface';
+import {
+  IContractDB,
+  IContractOfferPopulation,
+  IContractPiiAssignment,
+  IContractStatics,
+  IPopulatedContractPiiAssignment,
+} from '../interfaces/contract.interface';
 
 // Ecosystem Contract Model / Dataspace User Case
 const PurposeSchema = new Schema({
@@ -763,7 +769,81 @@ export const ContractSchema: Schema = new Schema(
 // Retrieve a full lineage ordered by version in one query.
 ContractSchema.index({ rootContract: 1, version: 1 });
 
-export default mongoose.model<IContractDB>(
-    'Contract',
-    ContractSchema,
-);
+type ContractOffering = Record<string, any>;
+
+/**
+ * Resolves one kind of reference held by an offering, given every offering of
+ * the contract
+ */
+type OfferPopulator = (
+  offering: ContractOffering,
+  offerings: ContractOffering[],
+) => ContractOffering;
+
+// The participant narrows the match when the reference carries one
+const findOffering = (
+  offerings: ContractOffering[],
+  reference: IContractPiiAssignment,
+) =>
+  offerings.find(
+    (entry) =>
+      entry.serviceOffering === reference.serviceOffering &&
+      (!reference.participant || entry.participant === reference.participant),
+  );
+
+const OFFER_POPULATORS: Record<IContractOfferPopulation, OfferPopulator> = {
+  // A reference to an offering absent from the contract is kept with a null offering
+  piiAssignments: (offering, offerings) => {
+    if (!Array.isArray(offering.piiAssignments)) return offering;
+    return {
+      ...offering,
+      piiAssignments: offering.piiAssignments.map(
+        (
+          assignment: IContractPiiAssignment,
+        ): IPopulatedContractPiiAssignment => {
+          const target = findOffering(offerings, assignment);
+          return {
+            ...assignment,
+            offering: target ? withoutReferences(target) : null,
+          };
+        },
+      ),
+    };
+  },
+};
+
+// A populated offering is returned without its own references, so populations never nest
+const withoutReferences = (offering: ContractOffering) => {
+  const resolved = { ...offering };
+  Object.keys(OFFER_POPULATORS).forEach((key) => delete resolved[key]);
+  return resolved;
+};
+
+ContractSchema.statics.populateOffers = function <T>(
+  contract: T,
+  populations = Object.keys(OFFER_POPULATORS) as IContractOfferPopulation[],
+): T {
+  const plain: any =
+    contract && typeof (contract as any).toObject === 'function'
+      ? (contract as any).toObject()
+      : contract;
+  if (!plain || !Array.isArray(plain.serviceOfferings)) return plain;
+
+  // Every populator resolves against the stored offerings, not populated ones
+  const offerings: ContractOffering[] = plain.serviceOfferings;
+  return {
+    ...plain,
+    serviceOfferings: offerings.map((offering) =>
+      populations.reduce(
+        (populated, population) =>
+          OFFER_POPULATORS[population](populated, offerings),
+        offering,
+      ),
+    ),
+  };
+};
+
+export default mongoose.model<
+  IContractDB,
+  mongoose.Model<IContractDB> & IContractStatics
+>('Contract', ContractSchema);

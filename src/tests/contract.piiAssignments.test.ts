@@ -112,6 +112,23 @@ describe('PII assignments of contract offerings', () => {
     expect(offering.piiAssignments[0].offering.offerName).to.equal('matching');
   });
 
+  it('should populate the offers of a lean contract through the model', async () => {
+    const stored = await Contract.findById(contractId).lean();
+
+    const populated: any = Contract.populateOffers(stored);
+    const offering = populated.serviceOfferings.find(
+      (entry: any) => entry.serviceOffering === DATA_OFFERING,
+    );
+    expect(offering.piiAssignments[0].offering.offerName).to.equal('matching');
+
+    // Only the requested populations run
+    const unpopulated: any = Contract.populateOffers(stored, []);
+    const reference = unpopulated.serviceOfferings.find(
+      (entry: any) => entry.serviceOffering === DATA_OFFERING,
+    ).piiAssignments[0];
+    expect(reference).to.not.have.property('offering');
+  });
+
   it('should clear the PII assignments with an empty list', async () => {
     const response = await supertest(app.router)
       .put(`/contracts/${contractId}/offerings/pii-assignments`)

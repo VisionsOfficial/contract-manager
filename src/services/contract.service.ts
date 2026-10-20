@@ -6,7 +6,6 @@ import {
   IContractDB,
   IContractOfferingFlattenedFields,
   IContractPiiAssignment,
-  IPopulatedContractPiiAssignment,
 } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
 import { logger } from 'utils/logger';
@@ -710,51 +709,6 @@ export class ContractService {
       logger.error('[Contract/Service, setOfferingPiiAssignments]:', error);
       throw error;
     }
-  }
-
-  /**
-   * Resolves the PII assignment references of every offering of a contract
-   * against the contract's own serviceOfferings, so the offering data is
-   * returned without being duplicated in the database.
-   */
-  public static populatePiiAssignments<T>(contract: T): T {
-    const plain: any =
-      contract && typeof (contract as any).toObject === 'function'
-        ? (contract as any).toObject()
-        : contract;
-    if (!plain || !Array.isArray(plain.serviceOfferings)) {
-      return plain;
-    }
-
-    const offerings: any[] = plain.serviceOfferings;
-    plain.serviceOfferings = offerings.map((offering: any) => {
-      if (!Array.isArray(offering.piiAssignments)) {
-        return offering;
-      }
-      return {
-        ...offering,
-        piiAssignments: offering.piiAssignments.map(
-          (
-            assignment: IContractPiiAssignment,
-          ): IPopulatedContractPiiAssignment => {
-            const target = offerings.find(
-              (entry: any) =>
-                entry.serviceOffering === assignment.serviceOffering &&
-                (!assignment.participant ||
-                  entry.participant === assignment.participant),
-            );
-            if (!target) {
-              return { ...assignment, offering: null };
-            }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { piiAssignments, ...resolved } = target;
-            return { ...assignment, offering: resolved };
-          },
-        ),
-      };
-    });
-
-    return plain;
   }
 
   public async removeOfferingPolicies(
