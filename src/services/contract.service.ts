@@ -5,6 +5,7 @@ import {
   IContract,
   IContractDB,
   IContractOfferingFlattenedFields,
+  IContractPiiAssignment,
 } from 'interfaces/contract.interface';
 import Contract from 'models/contract.model';
 import { logger } from 'utils/logger';
@@ -664,6 +665,49 @@ export class ContractService {
         continue;
       }
       offering.set(key, value);
+    }
+  }
+
+  /**
+   * Replaces the PII assignments of a personal-data offering of the contract.
+   *
+   * The catalog is the source of truth for the pairings, so the whole list is
+   * sent on every change and stored as is: replaying a call is harmless.
+   * Returns `null` when the contract or the offering does not exist.
+   */
+  public async setOfferingPiiAssignments(
+    contractId: string,
+    serviceOffering: string,
+    participant: string,
+    piiAssignments: IContractPiiAssignment[],
+  ): Promise<IContractDB | null> {
+    try {
+      const contract = await Contract.findById(contractId);
+      if (!contract) {
+        return null;
+      }
+
+      const offering = contract.serviceOfferings.find(
+        (entry: ContractServiceOffering) =>
+          entry.serviceOffering === serviceOffering &&
+          entry.participant === participant,
+      );
+      if (!offering) {
+        return null;
+      }
+
+      offering.set(
+        'piiAssignments',
+        piiAssignments.map(({ serviceOffering, participant }) => ({
+          serviceOffering,
+          participant,
+        })),
+      );
+
+      return await contract.save();
+    } catch (error: any) {
+      logger.error('[Contract/Service, setOfferingPiiAssignments]:', error);
+      throw error;
     }
   }
 

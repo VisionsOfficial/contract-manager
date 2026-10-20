@@ -7,6 +7,7 @@ import {
   IContractMember,
   IContractOfferingFlattenedFields,
 } from 'interfaces/contract.interface';
+import Contract from 'models/contract.model';
 import { ContractService } from 'services/contract.service';
 import { logger } from 'utils/logger';
 import { validationResult } from 'express-validator';
@@ -50,7 +51,7 @@ export const getContract = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Contract not found.' });
     }
     logger.info('[Contract/Controller: getContract] Successfully called.');
-    return res.json(contract);
+    return res.json(Contract.populateOffers(contract));
   } catch (error) {
     logger.error('Error retrieving the contract:', error);
     res
@@ -213,7 +214,11 @@ export const getContractsFor = async (
       hasSigned,
     );
     logger.info('[Contract/Controller: getContractsFor] Successfully called.');
-    res.status(200).json({ contracts: contracts });
+    res.status(200).json({
+      contracts: contracts.map((contract) =>
+        Contract.populateOffers(contract),
+      ),
+    });
   } catch (error: any) {
     logger.error('Error while fetching contracts for the given DID:', {
       error,
@@ -231,7 +236,11 @@ export const getContracts = async (
     const status = req.query.status ? String(req.query.status) : undefined;
     const contracts: IContractDB[] = await contractService.getContracts(status);
     logger.info('[Contract/Controller: getAllContracts] Successfully called.');
-    res.status(200).json({ contracts: contracts });
+    res.status(200).json({
+      contracts: contracts.map((contract) =>
+        Contract.populateOffers(contract),
+      ),
+    });
   } catch (error: any) {
     logger.error('Error while fetching all contract:', { error });
     res.status(500).json({ error: error.message });
@@ -353,6 +362,40 @@ export const injectOfferingPolicies = async (
   } catch (error) {
     logger.error(
       '[Contract/Controller/injectOfferingPolicies] Error while injecting offering policies:',
+      error,
+    );
+    const message = (error as Error).message;
+    res.status(500).json({ error: message });
+  }
+};
+
+export const setOfferingPiiAssignments = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const contractService = await ContractService.getInstance();
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+    const contractId: string = req.params.id;
+    const { serviceOffering, participant, piiAssignments } = req.body;
+    const contract = await contractService.setOfferingPiiAssignments(
+      contractId,
+      serviceOffering,
+      participant,
+      piiAssignments,
+    );
+    if (!contract) {
+      res.status(404).json({ error: 'Contract or offering not found.' });
+      return;
+    }
+    res.status(200).json({ contract: Contract.populateOffers(contract) });
+  } catch (error) {
+    logger.error(
+      '[Contract/Controller/setOfferingPiiAssignments] Error while setting PII assignments:',
       error,
     );
     const message = (error as Error).message;
