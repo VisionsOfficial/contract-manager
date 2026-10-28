@@ -1178,6 +1178,7 @@ export type ContractServiceOfferingDocument =
       measurementPeriod?: 'Per incident' | 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Rolling 30 days' | 'Rolling 90 days' | 'Contract duration';
       claimProcedure?: 'Automatic credit' | 'Claim required' | 'Via ticket';
       claimDeadlineDays?: number;
+      claimDeadlineUnit?: 'days' | 'weeks' | 'months' | 'years';
       note?: string;
     }[];
 
@@ -1187,6 +1188,7 @@ export type ContractServiceOfferingDocument =
       unit?: 'months' | 'years';
       renewalMode?: 'None (contract ends)' | 'Automatic renewal' | 'On mutual agreement';
       noticePeriodDays?: number;
+      noticePeriodUnit?: 'months' | 'years';
     };
 
     // Termination for Convenience
