@@ -486,7 +486,8 @@ describe('New fields of the Contract model', () => {
           penaltyCap: '% of monthly fee',
           measurementPeriod: 'Monthly',
           claimProcedure: 'Automatic credit',
-          claimDeadlineDays: 30,
+          claimDeadlineDays: 2,
+          claimDeadlineUnit: 'months',
           note: 'Capped at 30% per month',
         };
         const body = await createContract({
@@ -499,7 +500,8 @@ describe('New fields of the Contract model', () => {
         expect(stored.penaltyAmount).to.equal(10);
         expect(stored.penaltyBasis).to.equal('% of period fee');
         expect(stored.claimProcedure).to.equal('Automatic credit');
-        expect(stored.claimDeadlineDays).to.equal(30);
+        expect(stored.claimDeadlineDays).to.equal(2);
+        expect(stored.claimDeadlineUnit).to.equal('months');
       });
     });
 
@@ -514,7 +516,8 @@ describe('New fields of the Contract model', () => {
                 value: 12,
                 unit: 'months',
                 renewalMode: 'Automatic renewal',
-                noticePeriodDays: 30,
+                noticePeriodDays: 3,
+                noticePeriodUnit: 'months',
               },
             },
           ],
@@ -524,7 +527,8 @@ describe('New fields of the Contract model', () => {
         expect(cd.value).to.equal(12);
         expect(cd.unit).to.equal('months');
         expect(cd.renewalMode).to.equal('Automatic renewal');
-        expect(cd.noticePeriodDays).to.equal(30);
+        expect(cd.noticePeriodDays).to.equal(3);
+        expect(cd.noticePeriodUnit).to.equal('months');
       });
     });
 
