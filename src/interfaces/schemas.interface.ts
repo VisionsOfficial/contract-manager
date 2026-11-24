@@ -1161,7 +1161,7 @@ export type ContractServiceOfferingDocument =
       endOfLifeDate?: Date;
       supportChannels?: ('Email' | 'Phone' | 'Chat' | 'Ticketing portal' | 'Slack' | 'Community forum' | 'Dedicated CSM')[];
       supportServiceHours?: '24/7' | 'Business hours 5x8' | 'Extended 5x12';
-      supportSeverityLevel?: { level?: 'Critical' | 'High' | 'Medium' | 'Low'; responseTimeValue?: number; responseTimeUnit?: string };
+      supportSeverityLevel?: { level?: 'Critical' | 'High' | 'Medium' | 'Low'; responseTimeValue?: number; responseTimeUnit?: string }[];
       measurementMonitoringMethod?: string;
       note?: string;
     };
@@ -1178,6 +1178,7 @@ export type ContractServiceOfferingDocument =
       measurementPeriod?: 'Per incident' | 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Rolling 30 days' | 'Rolling 90 days' | 'Contract duration';
       claimProcedure?: 'Automatic credit' | 'Claim required' | 'Via ticket';
       claimDeadlineDays?: number;
+      claimDeadlineUnit?: 'days' | 'weeks' | 'months' | 'years';
       note?: string;
     }[];
 
@@ -1187,6 +1188,7 @@ export type ContractServiceOfferingDocument =
       unit?: 'months' | 'years';
       renewalMode?: 'None (contract ends)' | 'Automatic renewal' | 'On mutual agreement';
       noticePeriodDays?: number;
+      noticePeriodUnit?: 'months' | 'years';
     };
 
     // Termination for Convenience
